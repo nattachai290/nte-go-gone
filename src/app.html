@@ -1,0 +1,449 @@
+<title>Going, Going, Gone! Calculator</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: auction ledger — a plum header band, then three stacked panels (value → bid → settle) that sit two-up on wide screens. */
+:root {
+  --bg: #f4f1f6;
+  --panel: #ffffff;
+  --ink: #241b2b;
+  --muted: #6d6175;
+  --line: #e3dbe8;
+  --plum: #3a1f4d;
+  --plum-ink: #f6eefb;
+  --gold: #b7791f;
+  --gold-soft: #fbefd9;
+  --good: #1f7a4d;
+  --good-soft: #e1f3e9;
+  --warn: #9a6400;
+  --warn-soft: #fdf0d6;
+  --bad: #b3261e;
+  --bad-soft: #fbe3e1;
+  --field: #faf8fb;
+  --f-display: "Bricolage Grotesque", "IBM Plex Sans Thai", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans Thai", "Noto Sans Thai", system-ui, sans-serif;
+  --f-num: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #17111c; --panel: #211928; --ink: #efe7f4; --muted: #a797b2; --line: #362a40;
+    --plum: #2b1639; --plum-ink: #f6eefb; --gold: #e8b04f; --gold-soft: #3a2b12;
+    --good: #5fd39a; --good-soft: #15302a; --warn: #f0b955; --warn-soft: #382a10;
+    --bad: #ff8a80; --bad-soft: #3a1a1c; --field: #1a1320; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #17111c; --panel: #211928; --ink: #efe7f4; --muted: #a797b2; --line: #362a40;
+  --plum: #2b1639; --plum-ink: #f6eefb; --gold: #e8b04f; --gold-soft: #3a2b12;
+  --good: #5fd39a; --good-soft: #15302a; --warn: #f0b955; --warn-soft: #382a10;
+  --bad: #ff8a80; --bad-soft: #3a1a1c; --field: #1a1320; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+header.band { background: var(--plum); color: var(--plum-ink); }
+header .wrap { padding-block: 28px 24px; display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: end; justify-content: space-between; }
+h1 { font-family: var(--f-display); font-weight: 800; font-size: clamp(28px, 5vw, 44px); line-height: 1.05; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+h1 .shell { color: var(--gold); }
+header p { margin: 6px 0 0; opacity: .8; max-width: 60ch; }
+.mults { display: flex; gap: 6px; flex-wrap: wrap; }
+.mult { font-family: var(--f-num); font-size: 12px; border: 1px solid rgba(255,255,255,.25); border-radius: 6px; padding: 4px 8px; white-space: nowrap; }
+.mult b { color: var(--gold); }
+main .wrap { padding-block: 24px 48px; display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 900px) { main .wrap { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); } .span2 { grid-column: 1 / -1; } }
+section.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.ph { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+h2 { font-family: var(--f-display); font-weight: 800; font-size: 22px; margin: 0; }
+h2 small { font-family: var(--f-body); font-weight: 500; font-size: 13px; color: var(--muted); margin-left: 6px; }
+.hint { color: var(--muted); font-size: 13px; margin: 0; }
+label { font-size: 12px; color: var(--muted); letter-spacing: .02em; display: block; margin-bottom: 4px; }
+input, select { font: 500 15px var(--f-num); color: var(--ink); background: var(--field); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; width: 100%; min-width: 0; }
+input.txt { font-family: var(--f-body); }
+input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+button { font: 600 14px var(--f-body); border-radius: 8px; border: 1px solid var(--line); background: var(--field); color: var(--ink); padding: 8px 12px; cursor: pointer; }
+button:hover { border-color: var(--gold); }
+button.primary { background: var(--plum); color: var(--plum-ink); border-color: var(--plum); }
+button.ghost { background: transparent; }
+button.x { padding: 6px 10px; color: var(--muted); }
+.lots { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+th { text-align: left; font-size: 12px; color: var(--muted); font-weight: 500; padding: 0 6px 6px; white-space: nowrap; }
+td { padding: 4px 6px; vertical-align: middle; }
+.lots td:first-child { min-width: 130px; }
+.lots td.n { min-width: 96px; }
+.row { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+.totals { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.tot { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; min-width: 0; }
+.tot span { display: block; font-size: 12px; color: var(--muted); }
+.tot b { font: 700 clamp(16px, 3.2vw, 22px) var(--f-num); overflow-wrap: anywhere; }
+.tot.sel { border-color: var(--gold); background: var(--gold-soft); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; flex-wrap: wrap; }
+.seg button { border: 0; border-radius: 0; background: transparent; padding: 7px 12px; }
+.seg button[aria-pressed="true"] { background: var(--plum); color: var(--plum-ink); }
+.rounds { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.rounds button { display: flex; flex-direction: column; align-items: center; gap: 0; padding: 8px 4px; }
+.rounds button small { font: 500 12px var(--f-num); color: var(--muted); }
+.rounds button[aria-pressed="true"] { background: var(--plum); color: var(--plum-ink); border-color: var(--plum); }
+.rounds button[aria-pressed="true"] small { color: var(--gold); }
+.verdict { border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; border: 1px solid transparent; }
+.verdict.good { background: var(--good-soft); border-color: color-mix(in srgb, var(--good) 35%, transparent); }
+.verdict.warn { background: var(--warn-soft); border-color: color-mix(in srgb, var(--warn) 35%, transparent); }
+.verdict.bad { background: var(--bad-soft); border-color: color-mix(in srgb, var(--bad) 35%, transparent); }
+.verdict.info { background: var(--field); border-color: var(--line); }
+.pill { align-self: flex-start; font: 700 12px var(--f-body); letter-spacing: .04em; padding: 2px 10px; border-radius: 99px; color: var(--panel); }
+.good .pill { background: var(--good); } .warn .pill { background: var(--warn); } .bad .pill { background: var(--bad); } .info .pill { background: var(--muted); }
+.big { font: 700 clamp(22px, 4.5vw, 30px) var(--f-num); line-height: 1.15; overflow-wrap: anywhere; }
+.verdict p { margin: 0; }
+.num { font-family: var(--f-num); font-weight: 700; white-space: nowrap; }
+.pos { color: var(--good); } .neg { color: var(--bad); }
+.grid-tbl { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
+.grid-tbl table td, .grid-tbl table th { padding: 8px 10px; border-top: 1px solid var(--line); font-size: 14px; }
+.grid-tbl table tr:first-child th { border-top: 0; padding-top: 10px; }
+.grid-tbl td.mono { font-family: var(--f-num); }
+.grid-tbl tr.cur td { background: var(--gold-soft); }
+ul.notes { margin: 0; padding-left: 20px; color: var(--muted); font-size: 14px; display: grid; gap: 4px; }
+.sample { font-size: 12px; font-weight: 600; color: var(--gold); border: 1px dashed var(--gold); border-radius: 99px; padding: 1px 8px; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+footer { color: var(--muted); font-size: 12px; text-align: center; padding-block: 0 32px; }
+@media (max-width: 520px) { .totals { grid-template-columns: 1fr; } .rounds button { font-size: 13px; } }
+@media (prefers-reduced-motion: no-preference) { .verdict, .tot { transition: background-color .2s, border-color .2s; } }
+</style>
+
+<header class="band">
+  <div class="wrap">
+    <div>
+      <h1>Going, Going, <span class="shell">Gone!</span></h1>
+      <p>ตัวช่วยประเมินมูลค่าล็อต คำนวณราคาบิดชนะทันที และสรุปกำไร/ขาดทุนเป็น Gold Shells</p>
+    </div>
+    <div class="mults" aria-label="เงื่อนไขชนะทันที">
+      <span class="mult">R1 &gt; <b>2×</b></span><span class="mult">R2 &gt; <b>1.6×</b></span><span class="mult">R3 &gt; <b>1.3×</b></span><span class="mult">R4 &gt; <b>1.1×</b></span><span class="mult">R5 <b>สูงสุดชนะ</b></span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+
+    <!-- 1. Lot appraisal -->
+    <section class="panel" id="appraise">
+      <div class="ph">
+        <h2>1 · ประเมินมูลค่า<small>รวมทุกล็อตในตู้</small></h2>
+        <span class="sample" id="sampleTag">ข้อมูลตัวอย่าง</span>
+      </div>
+      <p class="hint">ใส่ช่วงราคาที่ประเมินได้ของแต่ละชิ้นจาก intel ของผู้ช่วยและอุปกรณ์ ถ้ารู้ราคาแน่นอนให้ใส่ต่ำสุด = สูงสุด พิมพ์ 12k หรือ 1.5m ได้</p>
+      <div class="lots">
+        <table>
+          <thead><tr><th>ชิ้น</th><th>จำนวน</th><th>ต่ำสุด / ชิ้น</th><th>สูงสุด / ชิ้น</th><th></th></tr></thead>
+          <tbody id="lotBody"></tbody>
+        </table>
+      </div>
+      <div class="actions">
+        <button id="addLot" type="button">+ เพิ่มชิ้น</button>
+        <button id="clearLots" type="button" class="ghost">ล้างทั้งหมด</button>
+      </div>
+      <div class="row">
+        <div><label for="hintMin">intel: มูลค่ารวมไม่ต่ำกว่า</label><input id="hintMin" inputmode="decimal" placeholder="ไม่ทราบ"></div>
+        <div><label for="hintMax">intel: มูลค่ารวมไม่เกิน</label><input id="hintMax" inputmode="decimal" placeholder="ไม่ทราบ"></div>
+        <div><label for="unknownAdd">ชิ้นที่ยังไม่รู้ (บวกเพิ่มโดยประมาณ)</label><input id="unknownAdd" inputmode="decimal" placeholder="0"></div>
+      </div>
+      <div class="totals" id="totals">
+        <div class="tot" data-k="low"><span>ต่ำสุด</span><b id="tLow">0</b></div>
+        <div class="tot" data-k="mid"><span>กลาง</span><b id="tMid">0</b></div>
+        <div class="tot" data-k="high"><span>สูงสุด</span><b id="tHigh">0</b></div>
+      </div>
+      <div>
+        <label>ใช้มูลค่าไหนในการคำนวณบิด</label>
+        <div class="seg" id="basis" role="group" aria-label="มูลค่าที่ใช้">
+          <button type="button" data-v="low">ต่ำสุด (ปลอดภัย)</button>
+          <button type="button" data-v="mid">กลาง</button>
+          <button type="button" data-v="high">สูงสุด (เสี่ยง)</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Bid helper -->
+    <section class="panel" id="bid">
+      <div class="ph"><h2>2 · ตัวช่วยบิด<small>รอบปัจจุบัน</small></h2></div>
+      <div class="rounds" id="rounds" role="group" aria-label="เลือกรอบ"></div>
+      <p class="hint">ใส่บิดของคู่แข่งทั้ง 3 คน (จากรอบก่อน หรือที่คาดว่าจะบิดรอบนี้) และบิดที่คุณตั้งใจจะใส่</p>
+      <div class="row">
+        <div><label for="opp1">คู่แข่ง A</label><input id="opp1" inputmode="decimal" placeholder="0"></div>
+        <div><label for="opp2">คู่แข่ง B</label><input id="opp2" inputmode="decimal" placeholder="0"></div>
+        <div><label for="opp3">คู่แข่ง C</label><input id="opp3" inputmode="decimal" placeholder="0"></div>
+        <div><label for="myBid">บิดของคุณ</label><input id="myBid" inputmode="decimal" placeholder="0"></div>
+      </div>
+      <div class="verdict info" id="verdict"></div>
+      <div class="verdict info" id="myCheck"></div>
+    </section>
+
+    <!-- Rounds table -->
+    <section class="panel span2" id="ladder">
+      <div class="ph"><h2>เพดานชนะทันทีทุกรอบ</h2></div>
+      <p class="hint">"คู่แข่งสูงสุดไม่เกิน" = ถ้าบิดสูงสุดของคู่แข่งต่ำกว่าตัวเลขนี้ คุณบิดเท่ามูลค่าประเมินแล้วชนะทันทีโดยไม่ขาดทุน</p>
+      <div class="grid-tbl">
+        <table>
+          <thead><tr><th>รอบ</th><th>เงื่อนไข</th><th>บิดชนะทันทีขั้นต่ำ</th><th>กำไรถ้าชนะ (ต่ำ / กลาง / สูง)</th><th>คู่แข่งสูงสุดไม่เกิน</th></tr></thead>
+          <tbody id="ladderBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 3. Settlement -->
+    <section class="panel" id="settle">
+      <div class="ph"><h2>3 · สรุปผล<small>หลังประมูลจบ</small></h2></div>
+      <div class="row">
+        <div><label for="winBid">ราคาที่ผู้ชนะจ่าย</label><input id="winBid" inputmode="decimal" placeholder="0"></div>
+        <div><label for="realVal">มูลค่าจริงที่เปิดได้</label><input id="realVal" inputmode="decimal" placeholder="0"></div>
+      </div>
+      <div class="seg" id="who" role="group" aria-label="ใครชนะ">
+        <button type="button" data-v="me">ฉันชนะ</button>
+        <button type="button" data-v="other">คนอื่นชนะ</button>
+      </div>
+      <div class="verdict info" id="settleOut"></div>
+    </section>
+
+    <section class="panel" id="rules">
+      <div class="ph"><h2>กติกาที่ใช้คำนวณ</h2></div>
+      <ul class="notes">
+        <li>ประมูล 5 รอบ ชนะทันทีเมื่อบิดมากกว่าบิดอันดับ 2 คูณ 2× / 1.6× / 1.3× / 1.1× ในรอบ 1–4 (ต้องมากกว่า ไม่ใช่เท่ากับ)</li>
+        <li>รอบ 5 บิดสูงสุดชนะทั้งหมด ถ้าเสมอจะไปรอบ 6 เฉพาะคนที่เสมอ บิดรอบ 6 ต้องไม่น้อยกว่าบิดรอบ 5 ของตัวเอง ถ้าเสมออีกจะไม่มีการขาย</li>
+        <li>ถ้าผู้ชนะขาดทุนตอนสรุปผล อีก 3 คนได้โบนัสคนละ 10% ของยอดขาดทุน ดังนั้นการดันราคาให้คู่แข่งจ่ายเกินมูลค่าก็ได้ Gold Shells</li>
+        <li>เครื่องคิดนี้ถือว่าบิดเป็นจำนวนเต็ม บิดชนะทันทีขั้นต่ำ = ปัดลงของ (บิดคู่แข่งสูงสุด × ตัวคูณ) + 1</li>
+      </ul>
+      <div class="actions"><button type="button" id="resetAll" class="ghost">รีเซ็ตทุกอย่างกลับเป็นตัวอย่าง</button></div>
+    </section>
+  </div>
+</main>
+<footer>ตัวช่วยคำนวณที่แฟนเกมทำขึ้น ไม่เกี่ยวข้องกับผู้พัฒนาเกม · ข้อมูลเก็บในเบราว์เซอร์ของคุณเท่านั้น</footer>
+
+<script>
+(function () {
+  const MULTS = [2, 1.6, 1.3, 1.1, null];
+  const KEY = "ggg-calc-v1";
+  const SAMPLE = {
+    sample: true,
+    lots: [
+      { name: "แจกันลายคราม", qty: 1, lo: 18000, hi: 26000 },
+      { name: "เหรียญทองโบราณ", qty: 3, lo: 2500, hi: 4000 },
+      { name: "กล่องปริศนา", qty: 1, lo: 5000, hi: 30000 }
+    ],
+    hintMin: "", hintMax: "", unknownAdd: "",
+    basis: "mid", round: 1,
+    opp: ["15000", "22000", "9000"], myBid: "", winBid: "", realVal: "", who: "me"
+  };
+  let S;
+  try { S = JSON.parse(localStorage.getItem(KEY)) || null; } catch (e) { S = null; }
+  if (!S || !Array.isArray(S.lots)) S = structuredClone(SAMPLE);
+
+  const $ = (id) => document.getElementById(id);
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+
+  function parse(v) {
+    if (v == null) return NaN;
+    let s = String(v).trim().toLowerCase().replace(/[,\s_]/g, "");
+    if (!s) return NaN;
+    let m = 1;
+    if (s.endsWith("k")) { m = 1e3; s = s.slice(0, -1); }
+    else if (s.endsWith("m")) { m = 1e6; s = s.slice(0, -1); }
+    const n = parseFloat(s);
+    return isFinite(n) ? n * m : NaN;
+  }
+  const fmt = (n) => isFinite(n) ? Math.round(n).toLocaleString("en-US") : "–";
+  const sfmt = (n) => !isFinite(n) ? "–" : (n > 0 ? "+" : n < 0 ? "−" : "") + Math.abs(Math.round(n)).toLocaleString("en-US");
+  const cls = (n) => n > 0 ? "pos" : n < 0 ? "neg" : "";
+
+  function untouched() { if (S.sample) { S.sample = false; $("sampleTag").hidden = true; } }
+
+  /* ---------- lots ---------- */
+  function renderLots() {
+    const tb = $("lotBody");
+    tb.innerHTML = "";
+    S.lots.forEach((l, i) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML =
+        `<td><input class="txt" id="ln${i}" aria-label="ชื่อชิ้น" value=""></td>` +
+        `<td class="n" style="min-width:64px"><input id="lq${i}" aria-label="จำนวน" inputmode="numeric"></td>` +
+        `<td class="n"><input id="ll${i}" aria-label="ต่ำสุดต่อชิ้น" inputmode="decimal"></td>` +
+        `<td class="n"><input id="lh${i}" aria-label="สูงสุดต่อชิ้น" inputmode="decimal"></td>` +
+        `<td><button type="button" class="x" aria-label="ลบชิ้นนี้">✕</button></td>`;
+      tb.appendChild(tr);
+      const [n, q, lo, hi] = tr.querySelectorAll("input");
+      n.value = l.name || ""; q.value = l.qty ?? 1; lo.value = l.lo ?? ""; hi.value = l.hi ?? "";
+      n.addEventListener("input", () => { l.name = n.value; untouched(); save(); });
+      q.addEventListener("input", () => { l.qty = q.value; untouched(); update(); });
+      lo.addEventListener("input", () => { l.lo = lo.value; untouched(); update(); });
+      hi.addEventListener("input", () => { l.hi = hi.value; untouched(); update(); });
+      tr.querySelector("button").addEventListener("click", () => { S.lots.splice(i, 1); untouched(); renderLots(); update(); });
+    });
+  }
+
+  function totals() {
+    let lo = 0, hi = 0;
+    for (const l of S.lots) {
+      const q = parse(l.qty); const qty = isFinite(q) ? q : 1;
+      let a = parse(l.lo), b = parse(l.hi);
+      if (!isFinite(a) && !isFinite(b)) continue;
+      if (!isFinite(a)) a = b; if (!isFinite(b)) b = a;
+      if (a > b) [a, b] = [b, a];
+      lo += a * qty; hi += b * qty;
+    }
+    const extra = parse(S.unknownAdd);
+    if (isFinite(extra)) { lo += extra; hi += extra; }
+    const hmin = parse(S.hintMin), hmax = parse(S.hintMax);
+    if (isFinite(hmin)) { lo = Math.max(lo, hmin); hi = Math.max(hi, hmin); }
+    if (isFinite(hmax)) { hi = Math.min(hi, hmax); lo = Math.min(lo, hmax); }
+    return { low: lo, mid: (lo + hi) / 2, high: hi };
+  }
+
+  /* ---------- rounds ---------- */
+  function renderRounds() {
+    const box = $("rounds");
+    box.innerHTML = "";
+    MULTS.forEach((m, i) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.setAttribute("aria-pressed", String(S.round === i + 1));
+      b.innerHTML = `รอบ ${i + 1}<small>${m ? "&gt;" + m + "×" : "สูงสุด"}</small>`;
+      b.addEventListener("click", () => { S.round = i + 1; renderRounds(); update(); });
+      box.appendChild(b);
+    });
+  }
+
+  function winBidFor(top, m) {
+    if (!isFinite(top) || top <= 0) return m ? 1 : 1;
+    return m ? Math.floor(top * m) + 1 : Math.floor(top) + 1;
+  }
+
+  function setVerdict(el, kind, pill, html) {
+    el.className = "verdict " + kind;
+    el.innerHTML = `<span class="pill">${pill}</span>${html}`;
+  }
+
+  function update() {
+    const T = totals();
+    $("tLow").textContent = fmt(T.low); $("tMid").textContent = fmt(T.mid); $("tHigh").textContent = fmt(T.high);
+    document.querySelectorAll("#totals .tot").forEach((d) => d.classList.toggle("sel", d.dataset.k === S.basis));
+    document.querySelectorAll("#basis button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.v === S.basis)));
+    document.querySelectorAll("#who button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.v === S.who)));
+    const V = T[S.basis];
+    const haveV = V > 0;
+
+    const opps = S.opp.map(parse).filter((x) => isFinite(x) && x > 0);
+    const top = opps.length ? Math.max(...opps) : NaN;
+    const r = S.round, m = MULTS[r - 1];
+
+    /* main verdict */
+    const vEl = $("verdict");
+    if (!haveV) {
+      setVerdict(vEl, "info", "รอข้อมูล", `<p>ใส่ราคาประเมินของล็อตในส่วนที่ 1 ก่อน</p>`);
+    } else if (!isFinite(top)) {
+      const cap = m ? V / m : V;
+      setVerdict(vEl, "info", "ยังไม่มีบิดคู่แข่ง",
+        `<p>มูลค่าที่ใช้ <span class="num">${fmt(V)}</span> · บิดได้สูงสุดโดยไม่ขาดทุน <span class="num">${fmt(V)}</span></p>` +
+        (m ? `<p>ถ้าคู่แข่งสูงสุดบิดไม่ถึง <span class="num">${fmt(cap)}</span> การบิด <span class="num">${fmt(V)}</span> จะชนะทันทีในรอบ ${r}</p>` : ""));
+    } else {
+      const need = winBidFor(top, m);
+      const profit = V - need;
+      const pLo = T.low - need, pHi = T.high - need;
+      const bonusIfTheyWin = Math.max(0, top - V) * 0.1;
+      let kind, pill;
+      if (pLo >= 0) { kind = "good"; pill = "คุ้ม ทุกกรณี"; }
+      else if (profit >= 0) { kind = "warn"; pill = "คุ้มถ้าประเมินถูก"; }
+      else if (pHi >= 0) { kind = "warn"; pill = "เสี่ยง"; }
+      else { kind = "bad"; pill = "ไม่คุ้ม"; }
+      const label = m ? `บิดเพื่อชนะทันทีรอบ ${r}` : "บิดเพื่อชนะรอบ 5 (สูงกว่าคู่แข่ง)";
+      let html =
+        `<p>${label}</p><div class="big">${fmt(need)}</div>` +
+        `<p>คู่แข่งสูงสุด <span class="num">${fmt(top)}</span>${m ? ` × ${m}` : ""} · กำไรที่มูลค่า${{ low: "ต่ำสุด", mid: "กลาง", high: "สูงสุด" }[S.basis]}: <span class="num ${cls(profit)}">${sfmt(profit)}</span> (ช่วง <span class="num ${cls(pLo)}">${sfmt(pLo)}</span> ถึง <span class="num ${cls(pHi)}">${sfmt(pHi)}</span>)</p>`;
+      if (profit < 0) html += `<p>บิดได้คุ้มสุดที่ <span class="num">${fmt(V)}</span> ซึ่ง${m ? `ต้องให้คู่แข่งสูงสุดต่ำกว่า <span class="num">${fmt(V / m)}</span>` : "ต่ำกว่าคู่แข่งแล้ว"}</p>`;
+      if (bonusIfTheyWin > 0) html += `<p>ถ้าปล่อยให้คู่แข่งชนะที่ <span class="num">${fmt(top)}</span> เขาขาดทุน และคุณได้โบนัส 10% ≈ <span class="num pos">+${fmt(bonusIfTheyWin)}</span></p>`;
+      setVerdict(vEl, kind, pill, html);
+    }
+
+    /* my bid check */
+    const cEl = $("myCheck");
+    const mine = parse(S.myBid);
+    if (!isFinite(mine) || mine <= 0) {
+      setVerdict(cEl, "info", "บิดของคุณ", `<p>ใส่บิดของคุณเพื่อเช็กว่าชนะทันทีไหมและกำไรเท่าไร</p>`);
+    } else {
+      const all = [mine, ...opps].sort((a, b) => b - a);
+      const second = all.length > 1 ? all[1] : 0;
+      const gain = haveV ? V - mine : NaN;
+      const gainTxt = haveV ? ` · ถ้าได้ของ กำไร <span class="num ${cls(gain)}">${sfmt(gain)}</span>` : "";
+      if (opps.length && mine < top) {
+        const oppSecond = [mine, ...opps].sort((a, b) => b - a)[1];
+        const theyWin = m ? top > oppSecond * m : true;
+        setVerdict(cEl, theyWin ? "bad" : "warn", theyWin ? "คู่แข่งชนะทันที" : "ยังไม่ชนะ",
+          `<p>บิด <span class="num">${fmt(mine)}</span> ต่ำกว่าคู่แข่งสูงสุด <span class="num">${fmt(top)}</span>${theyWin && m ? ` และเขาสูงกว่าอันดับ 2 เกิน ${m}× จึงชนะทันที` : ""}</p>`);
+      } else if (opps.length && mine === top) {
+        setVerdict(cEl, "warn", "เสมอ", `<p>บิดเท่าคู่แข่งสูงสุด${r === 5 ? " รอบ 5 เสมอจะไปรอบ 6 ต้องบิดไม่น้อยกว่า " + `<span class="num">${fmt(mine)}</span>` : " ไม่ชนะทันที"}${gainTxt}</p>`);
+      } else if (!m) {
+        setVerdict(cEl, haveV && gain < 0 ? "bad" : "good", "ชนะรอบ 5", `<p>คุณบิดสูงสุด<span class="num"> ${fmt(mine)}</span>${gainTxt}</p>`);
+      } else if (mine > second * m) {
+        setVerdict(cEl, haveV && gain < 0 ? "bad" : "good", "ชนะทันที",
+          `<p><span class="num">${fmt(mine)}</span> &gt; ${fmt(second)} × ${m} = <span class="num">${fmt(second * m)}</span>${gainTxt}</p>`);
+      } else {
+        setVerdict(cEl, "warn", "นำ แต่ไม่ชนะทันที",
+          `<p>ต้องบิดมากกว่า <span class="num">${fmt(second * m)}</span> (ขาดอีก <span class="num">${fmt(Math.floor(second * m) + 1 - mine)}</span>)${gainTxt}</p>`);
+      }
+    }
+
+    /* ladder */
+    const lb = $("ladderBody");
+    lb.innerHTML = "";
+    MULTS.forEach((mm, i) => {
+      const need = isFinite(top) ? winBidFor(top, mm) : NaN;
+      const tr = document.createElement("tr");
+      if (i + 1 === r) tr.className = "cur";
+      const pr = (x) => isFinite(need) && x > 0 ? `<span class="${cls(x - need)}">${sfmt(x - need)}</span>` : "–";
+      tr.innerHTML =
+        `<td>รอบ ${i + 1}</td><td class="mono">${mm ? "&gt; " + mm + "× อันดับ 2" : "สูงสุดชนะ"}</td>` +
+        `<td class="mono">${fmt(need)}</td>` +
+        `<td class="mono">${pr(T.low)} / ${pr(T.mid)} / ${pr(T.high)}</td>` +
+        `<td class="mono">${haveV ? fmt(mm ? V / mm : V) : "–"}</td>`;
+      lb.appendChild(tr);
+    });
+
+    /* settlement */
+    const sEl = $("settleOut");
+    const wb = parse(S.winBid), rv = parse(S.realVal);
+    if (!isFinite(wb) || !isFinite(rv)) {
+      setVerdict(sEl, "info", "สรุปผล", `<p>ใส่ราคาที่ผู้ชนะจ่ายและมูลค่าจริงที่เปิดได้</p>`);
+    } else {
+      const pl = rv - wb;
+      if (S.who === "me") {
+        if (pl >= 0) setVerdict(sEl, "good", "กำไร", `<div class="big pos">${sfmt(pl)}</div><p>คู่แข่งไม่ได้โบนัส</p>`);
+        else setVerdict(sEl, "bad", "ขาดทุน", `<div class="big neg">${sfmt(pl)}</div><p>คู่แข่ง 3 คนได้โบนัสคนละ <span class="num">${fmt(-pl * 0.1)}</span> (รวม ${fmt(-pl * 0.3)})</p>`);
+      } else {
+        if (pl >= 0) setVerdict(sEl, "info", "ผู้ชนะกำไร", `<p>ผู้ชนะได้ <span class="num">${sfmt(pl)}</span> คุณไม่ได้โบนัส</p>`);
+        else setVerdict(sEl, "good", "คุณได้โบนัส", `<div class="big pos">+${fmt(-pl * 0.1)}</div><p>ผู้ชนะขาดทุน <span class="num">${fmt(-pl)}</span> คุณได้ 10%</p>`);
+      }
+    }
+    save();
+  }
+
+  /* ---------- wiring ---------- */
+  function bindField(id, key, idx) {
+    const el = $(id);
+    el.value = idx == null ? (S[key] ?? "") : (S[key][idx] ?? "");
+    el.addEventListener("input", () => {
+      if (idx == null) S[key] = el.value; else S[key][idx] = el.value;
+      untouched(); update();
+    });
+  }
+  function init() {
+    $("sampleTag").hidden = !S.sample;
+    renderLots(); renderRounds();
+    ["hintMin", "hintMax", "unknownAdd", "myBid", "winBid", "realVal"].forEach((k) => bindField(k, k));
+    [0, 1, 2].forEach((i) => bindField("opp" + (i + 1), "opp", i));
+    update();
+  }
+  $("addLot").addEventListener("click", () => { S.lots.push({ name: "", qty: 1, lo: "", hi: "" }); untouched(); renderLots(); update(); $("ln" + (S.lots.length - 1)).focus(); });
+  $("clearLots").addEventListener("click", () => { S.lots = [{ name: "", qty: 1, lo: "", hi: "" }]; S.hintMin = S.hintMax = S.unknownAdd = ""; ["hintMin","hintMax","unknownAdd"].forEach((k) => $(k).value = ""); untouched(); renderLots(); update(); });
+  document.querySelectorAll("#basis button").forEach((b) => b.addEventListener("click", () => { S.basis = b.dataset.v; update(); }));
+  document.querySelectorAll("#who button").forEach((b) => b.addEventListener("click", () => { S.who = b.dataset.v; update(); }));
+  $("resetAll").addEventListener("click", () => { S = structuredClone(SAMPLE); init(); });
+  init();
+})();
+</script>
