@@ -567,7 +567,7 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
       d.innerHTML = (b.w * b.h > 1 || b.h > 1 ? `<span class="n">${esc(label)}</span>` : "") + `<span class="v">${val}</span>`;
       d.title = `${item ? item.n : rname(b.r)} ${b.w}×${b.h}`;
       d.addEventListener("pointerdown", (e) => e.stopPropagation());
-      d.addEventListener("click", () => { if (S.tool === "erase") { removeBlocks([b.id]); return; } S.sel = S.sel === b.id ? null : b.id; update(); });
+      d.addEventListener("click", () => { if (S.tool === "erase") { removeBlocks([b.id]); return; } S.sel = S.sel === b.id ? null : b.id; update(); if (S.sel != null) $("inspector").scrollIntoView({ behavior: "smooth", block: "nearest" }); });
       board.appendChild(d);
     });
     $("rowCount").textContent = `${S.rows} แถว`;
