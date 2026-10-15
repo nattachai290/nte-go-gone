@@ -231,14 +231,14 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
 
     <section class="panel span2" id="catalog">
       <div class="ph"><h2>4 · คลังของสะสม<small>ใช้ทายว่าของที่ออกน่าจะเป็นอะไร</small></h2><span class="hint" id="catCount"></span></div>
-      <p class="hint">จดของที่เคยเห็นในเกม: ความหายาก ขนาด (กว้าง × สูง เป็นช่อง) และราคา ในเกมแตะที่เงาของแล้วจะเห็นรายการของที่เป็นไปได้พร้อมราคา ให้จดลงที่นี่ ยิ่งจดเยอะ ยิ่งทายแม่น</p>
+      <p class="hint">ใส่ของ 1×1 จาก Collectibles Index ไว้ให้แล้ว (แดง ส้ม ม่วง ฟ้า) ของขนาดอื่นเพิ่มเองได้ จดของที่เคยเห็นในเกม: ความหายาก ขนาด (กว้าง × สูง เป็นช่อง) และราคา ในเกมแตะที่เงาของแล้วจะเห็นรายการของที่เป็นไปได้พร้อมราคา ให้จดลงที่นี่ ยิ่งจดเยอะ ยิ่งทายแม่น</p>
       <div class="lots cat">
         <table>
           <thead><tr><th>ชื่อ</th><th>ความหายาก</th><th>กว้าง</th><th>สูง</th><th>ราคา</th><th></th></tr></thead>
           <tbody id="catBody"></tbody>
         </table>
       </div>
-      <div class="actions"><button type="button" id="addCat">+ เพิ่มของ</button></div>
+      <div class="actions"><button type="button" id="addCat">+ เพิ่มของ</button><select id="catFilter" aria-label="แสดงเฉพาะสี" style="width:auto"></select></div>
       <div style="display:grid;gap:20px;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))">
         <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
           <h3 style="margin:0;font-family:var(--f-display)">ทายของจากเงา</h3>
@@ -285,6 +285,8 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
 (function () {
   const MULTS = [2, 1.6, 1.3, 1.1, null];
   const KEY = "ggg-calc-v4";
+  const BUILTIN_VER = 1;
+  const BUILTIN = [{"n": "Eternal Heart", "r": "red", "w": 1, "h": 1, "v": 1314520}, {"n": "Cloudveil Cup", "r": "red", "w": 1, "h": 1, "v": 500000}, {"n": "\"Geometric\" Decor", "r": "red", "w": 1, "h": 1, "v": 61803}, {"n": "Chaotic Core", "r": "red", "w": 1, "h": 1, "v": 61740}, {"n": "Teardrop", "r": "red", "w": 1, "h": 1, "v": 50000}, {"n": "Crimson Gem", "r": "orange", "w": 1, "h": 1, "v": 9938}, {"n": "Nekomaru Tonkotsu Ramen", "r": "orange", "w": 1, "h": 1, "v": 9040}, {"n": "Laurel Crown", "r": "orange", "w": 1, "h": 1, "v": 7648}, {"n": "Starfish", "r": "orange", "w": 1, "h": 1, "v": 5555}, {"n": "Page 23", "r": "orange", "w": 1, "h": 1, "v": 5047}, {"n": "Light Cube", "r": "orange", "w": 1, "h": 1, "v": 5041}, {"n": "Sunset Pearl", "r": "orange", "w": 1, "h": 1, "v": 4975}, {"n": "Caged Feather Fragment", "r": "purple", "w": 1, "h": 1, "v": 5096}, {"n": "Gluttonous Eye", "r": "purple", "w": 1, "h": 1, "v": 3060}, {"n": "Azure Melody", "r": "purple", "w": 1, "h": 1, "v": 3037}, {"n": "Moonlit Sand", "r": "purple", "w": 1, "h": 1, "v": 2441}, {"n": "Ghosted", "r": "purple", "w": 1, "h": 1, "v": 2040}, {"n": "Brine Chestnut", "r": "purple", "w": 1, "h": 1, "v": 2036}, {"n": "Sunset Blush Diamond", "r": "purple", "w": 1, "h": 1, "v": 2036}, {"n": "Firework Seafood Paella", "r": "purple", "w": 1, "h": 1, "v": 2035}, {"n": "Compressed Paper Box", "r": "purple", "w": 1, "h": 1, "v": 2028}, {"n": "Rainbow Capsule", "r": "purple", "w": 1, "h": 1, "v": 2011}, {"n": "Cotton Heart", "r": "purple", "w": 1, "h": 1, "v": 2001}, {"n": "Gilded Eardrop", "r": "purple", "w": 1, "h": 1, "v": 1997}, {"n": "Bouncy Ball", "r": "purple", "w": 1, "h": 1, "v": 1992}, {"n": "Sparkling Konpeitō", "r": "purple", "w": 1, "h": 1, "v": 1988}, {"n": "Blue Glaze Vase", "r": "blue", "w": 1, "h": 1, "v": 1616}, {"n": "Manga", "r": "blue", "w": 1, "h": 1, "v": 1114}, {"n": "Silver Bell", "r": "blue", "w": 1, "h": 1, "v": 1094}, {"n": "Twisty Cookies", "r": "blue", "w": 1, "h": 1, "v": 1021}];
   const SAMPLE = {
     sample: true,
     lots: [
@@ -295,19 +297,20 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
     hintMin: "", hintMax: "", unknownAdd: "",
     basis: "game", round: 1,
     opp: ["", "", ""], myBid: "", winBid: "300000", realVal: "296739", sellVal: "145806", estAtBid: "", winRound: "1", who: "me",
-    cat: [
-      { n: "(ตัวอย่าง) นาฬิกาตั้งพื้น", r: "red", w: 2, h: 5, v: 120000 },
-      { n: "(ตัวอย่าง) ค็อกเทล", r: "purple", w: 3, h: 2, v: 9000 },
-      { n: "(ตัวอย่าง) กระต่ายแดง", r: "purple", w: 2, h: 2, v: 6000 },
-      { n: "(ตัวอย่าง) เหรียญ", r: "purple", w: 1, h: 1, v: 1500 }
-    ],
+    cat: BUILTIN.map((c) => ({ ...c })), builtinVer: BUILTIN_VER,
     hist: [{ d: "2026-10-15", r: 1, who: "me", price: 300000, actual: 296739, est: null, sell: 145806 }]
   };
   let S;
   try { S = JSON.parse(localStorage.getItem(KEY)) || null; } catch (e) { S = null; }
   if (!S || !Array.isArray(S.lots)) S = structuredClone(SAMPLE);
   if (!Array.isArray(S.hist)) S.hist = [];
-  if (!Array.isArray(S.cat)) S.cat = structuredClone(SAMPLE.cat);
+  if (!Array.isArray(S.cat)) S.cat = [];
+  if (S.builtinVer !== BUILTIN_VER) {
+    S.cat = S.cat.filter((c) => !String(c.n || "").startsWith("(ตัวอย่าง)"));
+    const have = new Set(S.cat.map((c) => String(c.n).toLowerCase()));
+    BUILTIN.forEach((c) => { if (!have.has(c.n.toLowerCase())) S.cat.push({ ...c }); });
+    S.builtinVer = BUILTIN_VER;
+  }
 
   const $ = (id) => document.getElementById(id);
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
@@ -561,7 +564,9 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
   function renderCat() {
     const tb = $("catBody");
     tb.innerHTML = "";
+    const f = $("catFilter").value;
     S.cat.forEach((c, i) => {
+      if (f && c.r !== f) return;
       const tr = document.createElement("tr");
       tr.innerHTML =
         `<td><input class="txt" id="cn${i}" aria-label="ชื่อ"></td>` +
@@ -629,14 +634,16 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
     $("fillAdd").addEventListener("click", () => addLot(`ของ${rname(r)} ${N} ช่อง`, mn[N], mx[N]));
   }
   function initCat() {
-    S.sil = S.sil || { r: "red", w: "", h: "" }; S.fill = S.fill || { r: "purple", n: "28" };
+    S.sil = S.sil || { r: "red", w: "1", h: "1" }; S.fill = S.fill || { r: "purple", n: "28" };
     $("silR").innerHTML = ropts(S.sil.r); $("fillR").innerHTML = ropts(S.fill.r);
     $("silW").value = S.sil.w; $("silH").value = S.sil.h; $("fillN").value = S.fill.n;
+    $("catFilter").innerHTML = `<option value="">แสดงทุกสี</option>` + ropts("");
     renderCat(); catChanged();
   }
+  $("catFilter").addEventListener("change", renderCat);
   ["silR", "silW", "silH"].forEach((id) => $(id).addEventListener("input", () => { solveSil(); save(); }));
   ["fillR", "fillN"].forEach((id) => $(id).addEventListener("input", () => { solveFill(); save(); }));
-  $("addCat").addEventListener("click", () => { S.cat.push({ n: "", r: $("silR").value || "purple", w: "", h: "", v: "" }); renderCat(); catChanged(); $("cn" + (S.cat.length - 1)).focus(); });
+  $("addCat").addEventListener("click", () => { S.cat.push({ n: "", r: $("catFilter").value || $("silR").value || "purple", w: "", h: "", v: "" }); renderCat(); catChanged(); $("cn" + (S.cat.length - 1)).focus(); });
   $("catCopy").addEventListener("click", () => {
     const t = $("catJson");
     navigator.clipboard.writeText(t.value).then(() => $("catMsg").textContent = "คัดลอกแล้ว", () => { t.select(); $("catMsg").textContent = "เลือกข้อความแล้ว กด Ctrl+C"; });
