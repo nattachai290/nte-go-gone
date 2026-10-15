@@ -238,7 +238,7 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
 
     <section class="panel span2" id="catalog">
       <div class="ph"><h2>4 · คลังของสะสม<small>ใช้ทายว่าของที่ออกน่าจะเป็นอะไร</small></h2><span class="hint" id="catCount"></span></div>
-      <p class="hint">ใส่ของจาก Collectibles Index ไว้ให้แล้ว 227 ชิ้น ทุกขนาด ของขนาดอื่นเพิ่มเองได้ จดของที่เคยเห็นในเกม: ความหายาก ขนาด (กว้าง × สูง เป็นช่อง) และราคา ในเกมแตะที่เงาของแล้วจะเห็นรายการของที่เป็นไปได้พร้อมราคา ให้จดลงที่นี่ ยิ่งจดเยอะ ยิ่งทายแม่น</p>
+      <p class="hint">คลังมีของครบทุกชิ้นใน Collectibles Index แล้ว (227 ชิ้น ณ 15 ต.ค. 2026) ถ้าเกมเพิ่มของใหม่ เพิ่มเองได้ ของขนาดอื่นเพิ่มเองได้ จดของที่เคยเห็นในเกม: ความหายาก ขนาด (กว้าง × สูง เป็นช่อง) และราคา ในเกมแตะที่เงาของแล้วจะเห็นรายการของที่เป็นไปได้พร้อมราคา ให้จดลงที่นี่ ยิ่งจดเยอะ ยิ่งทายแม่น</p>
       <div class="lots cat">
         <table>
           <thead><tr><th>ชื่อ</th><th>ความหายาก</th><th>กว้าง</th><th>สูง</th><th>ราคา</th><th></th></tr></thead>
@@ -629,7 +629,7 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
       if (mn[s - it.a] + it.v < mn[s]) { mn[s] = mn[s - it.a] + it.v; pmn[s] = k; }
       if (mx[s - it.a] + it.v > mx[s]) { mx[s] = mx[s - it.a] + it.v; pmx[s] = k; }
     });
-    if (!isFinite(mn[N])) { setVerdict(el, "warn", "ประกอบไม่ได้", `<p>ของ${rname(r)}ในคลังรวมกันให้ได้พอดี ${N} ช่องไม่ได้ แปลว่ายังมีของสีนี้ที่คลังไม่รู้จัก</p>`); return; }
+    if (!isFinite(mn[N])) { setVerdict(el, "warn", "ประกอบไม่ได้", `<p>ของ${rname(r)}ในคลังรวมกันให้ได้พอดี ${N} ช่องไม่ได้ ตรวจจำนวนช่องและสีอีกครั้ง หรือเกมอาจเพิ่มของใหม่ที่ยังไม่อยู่ในคลัง</p>`); return; }
     const combo = (p) => { const c = {}; let s = N; while (s > 0) { const k = p[s]; c[k] = (c[k] || 0) + 1; s -= items[k].a; } return Object.entries(c).map(([k, q]) => `${esc(items[k].n)} ×${q}`).join(", "); };
     setVerdict(el, "good", `${cnt[N] > 1e6 ? "มากกว่า 1 ล้าน" : fmt(cnt[N])} แบบ`,
       `<div class="big">${fmt(mn[N])} – ${fmt(mx[N])}</div>` +
