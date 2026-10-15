@@ -210,7 +210,7 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
             <tr><td>Evaluation Device</td><td>Micro 2 · Small 4 · Medium 6 · Large 8 ชิ้น บอกสี</td><td>แตะเงาแล้วเปลี่ยนสี</td></tr>
             <tr><td>[ประเภท] Evaluation Device<br><span class="hint">Antique · Gem · Tech · Food · Daily Goods · Anomaly</span></td><td>สีของ 3 ชิ้นในประเภทนั้น</td><td>แตะเงาแล้วเปลี่ยนสี</td></tr>
             <tr><td>Appraisal Device</td><td>Micro 1 · Small 2 · Medium 3 · Large 5 ชิ้น เปิดของ</td><td>แตะเงาแล้วเลือกชิ้นของ</td></tr>
-            <tr><td>Rose Pact Express (ผู้ช่วย)</td><td>เริ่มห้อง: เงาของสีสูงสุด 1 ชิ้น · รอบต่อไป: สีและเงา 1 ชิ้น</td><td>วาดเงา แล้วติ๊ก "สีสูงสุดของตู้" · รอบต่อไปวาดเงาพร้อมสี</td></tr>
+            <tr><td>Rose Pact Express (ผู้ช่วย)</td><td>ทุกรอบ: เงา 1 ชิ้นที่สีสูงสุดในของที่ยังไม่เปิด (รอบหลังๆ สีเท่าเดิมหรือต่ำลง)</td><td>วาดเงาตามลำดับที่เปิด แล้วติ๊ก "Rose Pact Express"</td></tr>
             <tr><td>Special Size / Special Evaluation</td><td>เงาหรือสีของชิ้นที่ใช้ช่องมากที่สุด</td><td>วาดเงา แล้วติ๊ก "ชิ้นที่ใหญ่ที่สุด"</td></tr>
             <tr><td>Two-Slot Average Value</td><td>มูลค่าเฉลี่ยของของขนาด 2 ช่อง</td><td>คำใบ้ "มูลค่าเฉลี่ยตามขนาด"</td></tr>
             <tr><td>[สี] Slot Device</td><td>ช่องรวมของสีนั้น</td><td>คำใบ้ "Slot Device"</td></tr>
@@ -353,19 +353,26 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
   /* ---------- catalog helpers ---------- */
   const okItem = (c) => c.w > 0 && c.h > 0 && c.v > 0;
   const fits = (c, w, h) => (c.w === w && c.h === h) || (c.w === h && c.h === w);
-  /* highest rarity known to be in the lot, from other silhouettes and rarity clues */
-  function knownMaxRank(exceptId) {
-    let m = -1;
-    for (const x of S.blocks) if (x.id !== exceptId) {
-      const r = x.item ? x.item.r : x.r;
-      if (r !== "unk") m = Math.max(m, RK.indexOf(r));
+  /* Rose Pact Express: a "top" silhouette is the highest rarity among items still unrevealed when it appeared.
+     Silhouettes are ordered by draw order (id). Lower bound: anything known to be revealed later.
+     Upper bound: the rarity of earlier "top" silhouettes. */
+  const effR = (x) => x.item ? x.item.r : x.r;
+  function rankBounds(b) {
+    let lo = -1, hi = RK.length - 1;
+    const before = S.blocks.filter((x) => x.id < b.id), after = S.blocks.filter((x) => x.id > b.id);
+    for (const x of after) if (effR(x) !== "unk") lo = Math.max(lo, RK.indexOf(effR(x)));
+    for (const x of before) if (x.top && effR(x) !== "unk") hi = Math.min(hi, RK.indexOf(effR(x)));
+    for (const c of S.intel) {
+      if (!c.r || !isFinite(c.n) || c.n <= 0) continue;
+      const bb = before.filter((x) => effR(x) === c.r);
+      const left = c.type === "slots" ? c.n - bb.reduce((a, x) => a + x.w * x.h, 0) : c.type === "count" ? c.n - bb.length : bb.length ? 0 : 1;
+      if (left > 0) lo = Math.max(lo, RK.indexOf(c.r));
     }
-    for (const c of S.intel) if (c.r && isFinite(c.n) && c.n > 0) m = Math.max(m, RK.indexOf(c.r));
-    return m;
+    return { lo, hi };
   }
   function cands(b) {
-    const minRank = b.top && b.r === "unk" ? knownMaxRank(b.id) : -1;
-    return BUILTIN.filter((c) => okItem(c) && (b.r === "unk" || c.r === b.r) && RK.indexOf(c.r) >= minRank && fits(c, b.w, b.h)).sort((a, z) => z.v - a.v);
+    const bd = b.top && b.r === "unk" ? rankBounds(b) : { lo: -1, hi: RK.length };
+    return BUILTIN.filter((c) => okItem(c) && (b.r === "unk" || c.r === b.r) && RK.indexOf(c.r) >= bd.lo && RK.indexOf(c.r) <= bd.hi && fits(c, b.w, b.h)).sort((a, z) => z.v - a.v);
   }
   function blockInfo(b) {
     const it = b.item ? BUILTIN.find((c) => c.n === b.item.n && c.r === b.item.r) : null;
@@ -470,11 +477,6 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
       const row = { r: "unk", n: u.length, area: u.reduce((a, x) => a + x.b.w * x.b.h, 0), clue: [], note: "ยังไม่รู้ว่าเป็นชิ้นไหน", flag: u.some((x) => x.none) ? "มีเงาที่ไม่ตรงกับของในคลัง" : "",
         lo: u.reduce((a, x) => a + x.lo, 0), hi: u.reduce((a, x) => a + x.hi, 0), mid: u.reduce((a, x) => a + x.mid, 0) };
       rows.push(row); lo += row.lo; hi += row.hi; mid += row.mid;
-    }
-    const tb = S.blocks.find((x) => x.top);
-    if (tb) {
-      const tr = tb.item ? tb.item.r : tb.r;
-      if (tr !== "unk") rows.forEach((row) => { if (RK.indexOf(row.r) > RK.indexOf(tr)) row.flag = (row.flag ? row.flag + " · " : "") + `สูงกว่าสีสูงสุดของตู้ (${rname(tr)})`; });
     }
     const T = latest("total", null);
     if (T != null) { lo = hi = mid = T; }
@@ -638,7 +640,7 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
       `<div class="ph"><b>เงา ${b.w}×${b.h} · ${rname(b.r)}</b><button type="button" class="ghost" id="delBlk">ลบเงานี้</button></div>` +
       `<div class="tools">${rb}</div>` +
       `<label style="display:flex;gap:8px;align-items:center;font-size:14px;color:var(--ink);margin:0"><input type="checkbox" id="bigChk" style="width:auto"${b.big ? " checked" : ""}> ชิ้นที่ใช้ช่องมากที่สุด (Special Size / Special Evaluation)</label>` +
-      `<label style="display:flex;gap:8px;align-items:center;font-size:14px;color:var(--ink);margin:0"><input type="checkbox" id="topChk" style="width:auto"${b.top ? " checked" : ""}> สีสูงสุดของตู้ (Rose Pact Express) ตัดของที่สีต่ำกว่าสีที่รู้แล้วออก</label>` +
+      `<label style="display:flex;gap:8px;align-items:center;font-size:14px;color:var(--ink);margin:0"><input type="checkbox" id="topChk" style="width:auto"${b.top ? " checked" : ""}> Rose Pact Express: สีสูงสุดในของที่ยังไม่เปิด (ใช้ได้ทุกรอบ วาดตามลำดับที่เกมเปิด)</label>` +
       (c.length ? `<p class="hint">${c.length} แบบที่เป็นไปได้ · แตะเพื่อระบุว่าเป็นชิ้นนี้</p><div class="cands">${c.map((x, i) => `<button type="button" class="cand" data-i="${i}" aria-pressed="${!!(b.item && b.item.n === x.n && b.item.r === x.r)}"><span><span class="sw s-${x.r}"></span>${esc(x.n)}</span><span class="num">${fmt(x.v)}</span></button>`).join("")}</div>`
         : `<p class="hint">ไม่มีของ${b.r === "unk" ? "" : rname(b.r)}ขนาด ${b.w}×${b.h} ในคลัง ตรวจสีหรือขนาดอีกครั้ง</p>`);
     box.querySelectorAll("[data-r]").forEach((e) => e.addEventListener("click", () => { snap(); b.r = e.dataset.r; b.item = null; touched(); update(); }));
@@ -648,7 +650,7 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
       b.item = b.item && b.item.n === x.n && b.item.r === x.r ? null : { n: x.n, r: x.r };
       touched(); update();
     }));
-    $("topChk").addEventListener("change", (e) => { snap(); S.blocks.forEach((x) => { x.top = false; }); b.top = e.target.checked; touched(); update(); });
+    $("topChk").addEventListener("change", (e) => { snap(); b.top = e.target.checked; touched(); update(); });
     $("bigChk").addEventListener("change", (e) => { snap(); S.blocks.forEach((x) => { x.big = false; }); b.big = e.target.checked; touched(); update(); });
     $("delBlk").addEventListener("click", () => removeBlocks([b.id]));
   }
