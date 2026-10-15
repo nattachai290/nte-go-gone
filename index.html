@@ -110,6 +110,13 @@ td { padding: 4px 6px; vertical-align: middle; }
 ul.notes { margin: 0; padding-left: 20px; color: var(--muted); font-size: 14px; display: grid; gap: 4px; }
 .sample { font-size: 12px; font-weight: 600; color: var(--gold); border: 1px dashed var(--gold); border-radius: 99px; padding: 1px 8px; }
 .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.sw { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: middle; }
+.r-gray { background: #8d8a92; } .r-green { background: #3fae5a; } .r-blue { background: #2f8fe0; } .r-purple { background: #8b45d6; } .r-orange { background: #e8892a; } .r-red { background: #d8343a; }
+.cat td.n { min-width: 70px; }
+.cat td:nth-child(2) { min-width: 110px; }
+.matches { display: grid; gap: 6px; }
+.match { display: flex; justify-content: space-between; gap: 12px; border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; font-size: 14px; }
+textarea { width: 100%; min-height: 90px; font: 13px var(--f-num); color: var(--ink); background: var(--field); border: 1px solid var(--line); border-radius: 8px; padding: 8px; }
 footer { color: var(--muted); font-size: 12px; text-align: center; padding-block: 0 32px; }
 @media (max-width: 520px) { .totals { grid-template-columns: 1fr; } .rounds button { font-size: 13px; } }
 @media (prefers-reduced-motion: no-preference) { .verdict, .tot { transition: background-color .2s, border-color .2s; } }
@@ -205,16 +212,69 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
       <div class="ph"><h2>3 · สรุปผล<small>หลังประมูลจบ</small></h2></div>
       <div class="row">
         <div><label for="winBid">ราคาที่ผู้ชนะจ่าย</label><input id="winBid" inputmode="decimal" placeholder="0"></div>
-        <div><label for="realVal">มูลค่าจริงที่เปิดได้</label><input id="realVal" inputmode="decimal" placeholder="0"></div>
+        <div><label for="realVal">Actual Value</label><input id="realVal" inputmode="decimal" placeholder="0"></div>
+        <div><label for="sellVal">Sell Value (Quick Sell)</label><input id="sellVal" inputmode="decimal" placeholder="ไม่บังคับ"></div>
+        <div><label for="estAtBid">Current Estimate ตอนบิด</label><input id="estAtBid" inputmode="decimal" placeholder="ไม่บังคับ"></div>
+        <div><label for="winRound">ชนะรอบที่</label><select id="winRound"><option value="1">รอบ 1</option><option value="2">รอบ 2</option><option value="3">รอบ 3</option><option value="4">รอบ 4</option><option value="5">รอบ 5</option><option value="6">รอบ 6</option></select></div>
       </div>
       <div class="seg" id="who" role="group" aria-label="ใครชนะ">
         <button type="button" data-v="me">ฉันชนะ</button>
         <button type="button" data-v="other">คนอื่นชนะ</button>
       </div>
       <div class="verdict info" id="settleOut"></div>
+      <div class="actions"><button type="button" class="primary" id="saveRes">บันทึกผลลงประวัติ</button><span class="hint" id="saveMsg" aria-live="polite"></span></div>
     </section>
 
-    <section class="panel" id="rules">
+    <section class="panel span2" id="history">
+      <div class="ph"><h2>ประวัติการประมูล</h2><span class="hint" id="histSum"></span></div>
+      <p class="hint">ใส่ Current Estimate ตอนบิดไว้ด้วย แล้วเครื่องคิดจะเรียนรู้ว่ามูลค่าจริงมักห่างจากค่าที่เกมประเมินกี่เท่า</p>
+      <div class="grid-tbl">
+        <table>
+          <thead><tr><th>วันที่</th><th>รอบ</th><th>ผู้ชนะ</th><th>ราคาที่จ่าย</th><th>Actual Value</th><th>Estimate ตอนบิด</th><th>จริง ÷ Est.</th><th>ผลของคุณ</th><th></th></tr></thead>
+          <tbody id="histBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel span2" id="catalog">
+      <div class="ph"><h2>4 · คลังของสะสม<small>ใช้ทายว่าของที่ออกน่าจะเป็นอะไร</small></h2><span class="hint" id="catCount"></span></div>
+      <p class="hint">จดของที่เคยเห็นในเกม: ความหายาก ขนาด (กว้าง × สูง เป็นช่อง) และราคา ในเกมแตะที่เงาของแล้วจะเห็นรายการของที่เป็นไปได้พร้อมราคา ให้จดลงที่นี่ ยิ่งจดเยอะ ยิ่งทายแม่น</p>
+      <div class="lots cat">
+        <table>
+          <thead><tr><th>ชื่อ</th><th>ความหายาก</th><th>กว้าง</th><th>สูง</th><th>ราคา</th><th></th></tr></thead>
+          <tbody id="catBody"></tbody>
+        </table>
+      </div>
+      <div class="actions"><button type="button" id="addCat">+ เพิ่มของ</button></div>
+      <div style="display:grid;gap:20px;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))">
+        <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+          <h3 style="margin:0;font-family:var(--f-display)">ทายของจากเงา</h3>
+          <div class="row">
+            <div><label for="silR">ความหายาก</label><select id="silR"></select></div>
+            <div><label for="silW">กว้าง</label><input id="silW" inputmode="numeric" placeholder="ช่อง"></div>
+            <div><label for="silH">สูง</label><input id="silH" inputmode="numeric" placeholder="ช่อง"></div>
+          </div>
+          <div class="verdict info" id="silOut"></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+          <h3 style="margin:0;font-family:var(--f-display)">แตกจำนวนช่องตามสี</h3>
+          <div class="row">
+            <div><label for="fillR">ความหายาก</label><select id="fillR"></select></div>
+            <div><label for="fillN">จำนวนช่อง (จาก intel)</label><input id="fillN" inputmode="numeric" placeholder="เช่น 28"></div>
+          </div>
+          <div class="verdict info" id="fillOut"></div>
+        </div>
+      </div>
+      <details>
+        <summary class="hint" style="cursor:pointer">สำรอง / นำเข้าคลัง (JSON)</summary>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+          <textarea id="catJson" aria-label="ข้อมูลคลัง JSON"></textarea>
+          <div class="actions"><button type="button" id="catCopy">คัดลอก</button><button type="button" id="catImport">นำเข้าจากกล่องนี้</button><span class="hint" id="catMsg" aria-live="polite"></span></div>
+        </div>
+      </details>
+    </section>
+
+    <section class="panel span2" id="rules">
       <div class="ph"><h2>กติกาที่ใช้คำนวณ</h2></div>
       <ul class="notes">
         <li>ประมูล 5 รอบ ชนะทันทีเมื่อบิดมากกว่าบิดอันดับ 2 คูณ 2× / 1.6× / 1.3× / 1.1× ในรอบ 1–4 (ต้องมากกว่า ไม่ใช่เท่ากับ)</li>
@@ -231,7 +291,7 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
 <script>
 (function () {
   const MULTS = [2, 1.6, 1.3, 1.1, null];
-  const KEY = "ggg-calc-v2";
+  const KEY = "ggg-calc-v4";
   const SAMPLE = {
     sample: true,
     lots: [
@@ -241,11 +301,20 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
     gameEst: "30452",
     hintMin: "", hintMax: "", unknownAdd: "",
     basis: "game", round: 1,
-    opp: ["", "", ""], myBid: "", winBid: "", realVal: "", who: "me"
+    opp: ["", "", ""], myBid: "", winBid: "300000", realVal: "296739", sellVal: "145806", estAtBid: "", winRound: "1", who: "me",
+    cat: [
+      { n: "(ตัวอย่าง) นาฬิกาตั้งพื้น", r: "red", w: 2, h: 5, v: 120000 },
+      { n: "(ตัวอย่าง) ค็อกเทล", r: "purple", w: 3, h: 2, v: 9000 },
+      { n: "(ตัวอย่าง) กระต่ายแดง", r: "purple", w: 2, h: 2, v: 6000 },
+      { n: "(ตัวอย่าง) เหรียญ", r: "purple", w: 1, h: 1, v: 1500 }
+    ],
+    hist: [{ d: "2026-10-15", r: 1, who: "me", price: 300000, actual: 296739, est: null, sell: 145806 }]
   };
   let S;
   try { S = JSON.parse(localStorage.getItem(KEY)) || null; } catch (e) { S = null; }
   if (!S || !Array.isArray(S.lots)) S = structuredClone(SAMPLE);
+  if (!Array.isArray(S.hist)) S.hist = [];
+  if (!Array.isArray(S.cat)) S.cat = structuredClone(SAMPLE.cat);
 
   const $ = (id) => document.getElementById(id);
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
@@ -372,6 +441,11 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
       if (bonusIfTheyWin > 0) html += `<p>ถ้าปล่อยให้คู่แข่งชนะที่ <span class="num">${fmt(top)}</span> เขาขาดทุน และคุณได้โบนัส 10% ≈ <span class="num pos">+${fmt(bonusIfTheyWin)}</span></p>`;
       setVerdict(vEl, kind, pill, html);
     }
+    const rs = S.hist.filter((h) => h.est > 0 && h.actual > 0).map((h) => h.actual / h.est);
+    if (rs.length && S.basis === "game" && haveV) {
+      const avg = rs.reduce((a, b) => a + b, 0) / rs.length;
+      vEl.insertAdjacentHTML("beforeend", `<p class="hint">จากประวัติ ${rs.length} ครั้ง มูลค่าจริงเฉลี่ย ${avg.toFixed(2)}× ของ Estimate ตอนบิด → ประมาณ <span class="num">${fmt(V * avg)}</span></p>`);
+    }
 
     /* my bid check */
     const cEl = $("myCheck");
@@ -427,12 +501,34 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
       if (S.who === "me") {
         if (pl >= 0) setVerdict(sEl, "good", "กำไร", `<div class="big pos">${sfmt(pl)}</div><p>คู่แข่งไม่ได้โบนัส</p>`);
         else setVerdict(sEl, "bad", "ขาดทุน", `<div class="big neg">${sfmt(pl)}</div><p>คู่แข่ง 3 คนได้โบนัสคนละ <span class="num">${fmt(-pl * 0.1)}</span> (รวม ${fmt(-pl * 0.3)})</p>`);
+        const sv = parse(S.sellVal);
+        if (isFinite(sv)) sEl.insertAdjacentHTML("beforeend", `<p>ถ้ากด Quick Sell ทั้งหมดได้ <span class="num">${fmt(sv)}</span> เทียบราคาที่จ่าย <span class="num ${cls(sv - wb)}">${sfmt(sv - wb)}</span> (${Math.round(sv / rv * 100)}% ของ Actual Value)</p>`);
       } else {
         if (pl >= 0) setVerdict(sEl, "info", "ผู้ชนะกำไร", `<p>ผู้ชนะได้ <span class="num">${sfmt(pl)}</span> คุณไม่ได้โบนัส</p>`);
         else setVerdict(sEl, "good", "คุณได้โบนัส", `<div class="big pos">+${fmt(-pl * 0.1)}</div><p>ผู้ชนะขาดทุน <span class="num">${fmt(-pl)}</span> คุณได้ 10%</p>`);
       }
     }
+    renderHist();
     save();
+  }
+
+  function renderHist() {
+    const tb = $("histBody");
+    tb.innerHTML = "";
+    if (!S.hist.length) { tb.innerHTML = `<tr><td colspan="9" class="hint">ยังไม่มีประวัติ กรอกผลในส่วนที่ 3 แล้วกดบันทึก</td></tr>`; $("histSum").textContent = ""; return; }
+    let tot = 0; const rs = [];
+    S.hist.forEach((h, i) => {
+      const res = h.who === "me" ? h.actual - h.price : Math.max(0, h.price - h.actual) * 0.1;
+      tot += res;
+      const ratio = h.est > 0 ? h.actual / h.est : NaN;
+      if (isFinite(ratio)) rs.push(ratio);
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${h.d}</td><td>${h.r}</td><td>${h.who === "me" ? "ฉัน" : "คนอื่น"}</td><td class="mono">${fmt(h.price)}</td><td class="mono">${fmt(h.actual)}</td><td class="mono">${h.est ? fmt(h.est) : "–"}</td><td class="mono">${isFinite(ratio) ? ratio.toFixed(2) + "×" : "–"}</td><td class="mono ${cls(res)}">${sfmt(res)}</td><td><button type="button" class="x" aria-label="ลบแถวนี้">✕</button></td>`;
+      tr.querySelector("button").addEventListener("click", () => { S.hist.splice(i, 1); update(); });
+      tb.appendChild(tr);
+    });
+    const avg = rs.length ? (rs.reduce((a, b) => a + b, 0) / rs.length).toFixed(2) + "×" : "–";
+    $("histSum").innerHTML = `${S.hist.length} ครั้ง · รวม <span class="num ${cls(tot)}">${sfmt(tot)}</span> · จริง ÷ Est. เฉลี่ย <span class="num">${avg}</span>`;
   }
 
   /* ---------- wiring ---------- */
@@ -447,7 +543,7 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
   function init() {
     $("sampleTag").hidden = !S.sample;
     renderLots(); renderRounds();
-    ["gameEst", "hintMin", "hintMax", "unknownAdd", "myBid", "winBid", "realVal"].forEach((k) => bindField(k, k));
+    ["gameEst", "hintMin", "hintMax", "unknownAdd", "myBid", "winBid", "realVal", "sellVal", "estAtBid", "winRound"].forEach((k) => bindField(k, k));
     [0, 1, 2].forEach((i) => bindField("opp" + (i + 1), "opp", i));
     update();
   }
@@ -455,8 +551,114 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
   $("clearLots").addEventListener("click", () => { S.lots = [{ name: "", qty: 1, lo: "", hi: "" }]; S.hintMin = S.hintMax = S.unknownAdd = ""; ["hintMin","hintMax","unknownAdd"].forEach((k) => $(k).value = ""); untouched(); renderLots(); update(); });
   document.querySelectorAll("#basis button").forEach((b) => b.addEventListener("click", () => { S.basis = b.dataset.v; update(); }));
   document.querySelectorAll("#who button").forEach((b) => b.addEventListener("click", () => { S.who = b.dataset.v; update(); }));
-  $("resetAll").addEventListener("click", () => { S = structuredClone(SAMPLE); init(); });
+  $("saveRes").addEventListener("click", () => {
+    const price = parse(S.winBid), actual = parse(S.realVal);
+    if (!isFinite(price) || !isFinite(actual)) { $("saveMsg").textContent = "ใส่ราคาที่จ่ายและ Actual Value ก่อนบันทึก"; return; }
+    const est = parse(S.estAtBid), sell = parse(S.sellVal);
+    S.hist.unshift({ d: new Date().toISOString().slice(0, 10), r: parseInt(S.winRound || "5", 10), who: S.who, price, actual, est: isFinite(est) ? est : null, sell: isFinite(sell) ? sell : null });
+    $("saveMsg").textContent = "บันทึกแล้ว";
+    update();
+  });
+
+  /* ---------- catalog ---------- */
+  const RAR = [["gray", "เทา"], ["green", "เขียว"], ["blue", "ฟ้า"], ["purple", "ม่วง"], ["orange", "ส้ม"], ["red", "แดง"]];
+  const rname = (r) => (RAR.find((x) => x[0] === r) || ["", r])[1];
+  const ropts = (sel) => RAR.map(([k, t]) => `<option value="${k}"${k === sel ? " selected" : ""}>${t}</option>`).join("");
+  const esc = (t) => String(t ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  function renderCat() {
+    const tb = $("catBody");
+    tb.innerHTML = "";
+    S.cat.forEach((c, i) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML =
+        `<td><input class="txt" id="cn${i}" aria-label="ชื่อ"></td>` +
+        `<td><select id="cr${i}" aria-label="ความหายาก">${ropts(c.r)}</select></td>` +
+        `<td class="n"><input id="cw${i}" aria-label="กว้าง" inputmode="numeric"></td>` +
+        `<td class="n"><input id="ch${i}" aria-label="สูง" inputmode="numeric"></td>` +
+        `<td class="n" style="min-width:100px"><input id="cv${i}" aria-label="ราคา" inputmode="decimal"></td>` +
+        `<td><button type="button" class="x" aria-label="ลบ">✕</button></td>`;
+      tb.appendChild(tr);
+      const [n, w, h, v] = tr.querySelectorAll("input"); const r = tr.querySelector("select");
+      n.value = c.n || ""; w.value = c.w ?? ""; h.value = c.h ?? ""; v.value = c.v ?? "";
+      n.addEventListener("input", () => { c.n = n.value; catChanged(); });
+      r.addEventListener("change", () => { c.r = r.value; catChanged(); });
+      w.addEventListener("input", () => { c.w = parse(w.value); catChanged(); });
+      h.addEventListener("input", () => { c.h = parse(h.value); catChanged(); });
+      v.addEventListener("input", () => { c.v = parse(v.value); catChanged(); });
+      tr.querySelector("button").addEventListener("click", () => { S.cat.splice(i, 1); renderCat(); catChanged(); });
+    });
+  }
+  function catChanged() { $("catJson").value = JSON.stringify(S.cat); $("catCount").textContent = S.cat.length + " ชิ้นในคลัง"; solveSil(); solveFill(); save(); }
+  const okItem = (c) => c.w > 0 && c.h > 0 && c.v > 0;
+
+  function addLot(name, lo, hi) {
+    S.lots.push({ name, qty: 1, lo: Math.round(lo), hi: Math.round(hi) });
+    untouched(); renderLots(); update();
+    document.getElementById("appraise").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function solveSil() {
+    const el = $("silOut"), r = $("silR").value, w = parse($("silW").value), h = parse($("silH").value);
+    S.sil = { r, w: $("silW").value, h: $("silH").value };
+    if (!(w > 0 && h > 0)) { setVerdict(el, "info", "ใส่ขนาด", `<p>ใส่ขนาดเงาเป็นจำนวนช่อง เช่น นาฬิกาตั้งพื้น กว้าง 2 สูง 5</p>`); return; }
+    const m = S.cat.filter((c) => okItem(c) && c.r === r && ((c.w === w && c.h === h) || (c.w === h && c.h === w)));
+    if (!m.length) { setVerdict(el, "warn", "ไม่พบในคลัง", `<p>ยังไม่มีของ${rname(r)}ขนาด ${w}×${h} ในคลัง แตะเงาในเกมแล้วจดรายการที่เกมแสดงลงคลัง</p>`); return; }
+    const vs = m.map((c) => c.v), lo = Math.min(...vs), hi = Math.max(...vs), avg = vs.reduce((a, b) => a + b, 0) / vs.length;
+    setVerdict(el, "good", `${m.length} แบบที่เป็นไปได้`,
+      `<div class="big">${fmt(lo)}${hi > lo ? " – " + fmt(hi) : ""}</div><p>เฉลี่ย <span class="num">${fmt(avg)}</span></p>` +
+      `<div class="matches">${m.sort((a, b) => b.v - a.v).map((c) => `<div class="match"><span><span class="sw r-${c.r}"></span>${esc(c.n)}</span><span class="num">${fmt(c.v)}</span></div>`).join("")}</div>` +
+      `<div class="actions"><button type="button" id="silAdd">เพิ่มเข้าการประเมิน</button></div>`);
+    $("silAdd").addEventListener("click", () => addLot(`เงา${rname(r)} ${w}×${h}`, lo, hi));
+  }
+
+  function solveFill() {
+    const el = $("fillOut"), r = $("fillR").value, N = Math.round(parse($("fillN").value));
+    S.fill = { r, n: $("fillN").value };
+    if (!(N > 0)) { setVerdict(el, "info", "ใส่จำนวนช่อง", `<p>เช่น intel บอกว่า "ของม่วงใช้ 28 ช่อง" ให้เลือกม่วงแล้วใส่ 28 เครื่องคิดจะหาว่าของในคลังประกอบกันได้แบบไหนบ้าง</p>`); return; }
+    if (N > 400) { setVerdict(el, "warn", "มากเกินไป", `<p>รองรับไม่เกิน 400 ช่อง</p>`); return; }
+    const items = S.cat.filter((c) => okItem(c) && c.r === r).map((c) => ({ ...c, a: c.w * c.h }));
+    if (!items.length) { setVerdict(el, "warn", "ไม่มีของสีนี้ในคลัง", `<p>เพิ่มของ${rname(r)}ลงคลังก่อน</p>`); return; }
+    const mn = new Array(N + 1).fill(Infinity), mx = new Array(N + 1).fill(-Infinity), cnt = new Array(N + 1).fill(0);
+    const pmn = new Array(N + 1).fill(-1), pmx = new Array(N + 1).fill(-1);
+    mn[0] = 0; mx[0] = 0; cnt[0] = 1;
+    items.forEach((it, k) => { for (let s = it.a; s <= N; s++) cnt[s] += cnt[s - it.a]; });
+    for (let s = 1; s <= N; s++) items.forEach((it, k) => {
+      if (it.a > s) return;
+      if (mn[s - it.a] + it.v < mn[s]) { mn[s] = mn[s - it.a] + it.v; pmn[s] = k; }
+      if (mx[s - it.a] + it.v > mx[s]) { mx[s] = mx[s - it.a] + it.v; pmx[s] = k; }
+    });
+    if (!isFinite(mn[N])) { setVerdict(el, "warn", "ประกอบไม่ได้", `<p>ของ${rname(r)}ในคลังรวมกันให้ได้พอดี ${N} ช่องไม่ได้ แปลว่ายังมีของสีนี้ที่คลังไม่รู้จัก</p>`); return; }
+    const combo = (p) => { const c = {}; let s = N; while (s > 0) { const k = p[s]; c[k] = (c[k] || 0) + 1; s -= items[k].a; } return Object.entries(c).map(([k, q]) => `${esc(items[k].n)} ×${q}`).join(", "); };
+    setVerdict(el, "good", `${cnt[N] > 1e6 ? "มากกว่า 1 ล้าน" : fmt(cnt[N])} แบบ`,
+      `<div class="big">${fmt(mn[N])} – ${fmt(mx[N])}</div>` +
+      `<p>ถูกสุด: ${combo(pmn)}</p><p>แพงสุด: ${combo(pmx)}</p>` +
+      `<div class="actions"><button type="button" id="fillAdd">เพิ่มเข้าการประเมิน</button></div>`);
+    $("fillAdd").addEventListener("click", () => addLot(`ของ${rname(r)} ${N} ช่อง`, mn[N], mx[N]));
+  }
+  function initCat() {
+    S.sil = S.sil || { r: "red", w: "", h: "" }; S.fill = S.fill || { r: "purple", n: "28" };
+    $("silR").innerHTML = ropts(S.sil.r); $("fillR").innerHTML = ropts(S.fill.r);
+    $("silW").value = S.sil.w; $("silH").value = S.sil.h; $("fillN").value = S.fill.n;
+    renderCat(); catChanged();
+  }
+  ["silR", "silW", "silH"].forEach((id) => $(id).addEventListener("input", () => { solveSil(); save(); }));
+  ["fillR", "fillN"].forEach((id) => $(id).addEventListener("input", () => { solveFill(); save(); }));
+  $("addCat").addEventListener("click", () => { S.cat.push({ n: "", r: $("silR").value || "purple", w: "", h: "", v: "" }); renderCat(); catChanged(); $("cn" + (S.cat.length - 1)).focus(); });
+  $("catCopy").addEventListener("click", () => {
+    const t = $("catJson");
+    navigator.clipboard.writeText(t.value).then(() => $("catMsg").textContent = "คัดลอกแล้ว", () => { t.select(); $("catMsg").textContent = "เลือกข้อความแล้ว กด Ctrl+C"; });
+  });
+  $("catImport").addEventListener("click", () => {
+    try {
+      const a = JSON.parse($("catJson").value);
+      if (!Array.isArray(a)) throw 0;
+      S.cat = a.filter((c) => c && typeof c === "object").map((c) => ({ n: String(c.n ?? ""), r: RAR.some((x) => x[0] === c.r) ? c.r : "gray", w: +c.w || "", h: +c.h || "", v: +c.v || "" }));
+      renderCat(); catChanged(); $("catMsg").textContent = `นำเข้า ${S.cat.length} ชิ้นแล้ว`;
+    } catch (e) { $("catMsg").textContent = "ข้อมูลไม่ใช่ JSON ของคลัง ตรวจแล้วลองใหม่"; }
+  });
+  $("resetAll").addEventListener("click", () => { S = structuredClone(SAMPLE); init(); initCat(); });
   init();
+  initCat();
 })();
 </script>
 </body>
