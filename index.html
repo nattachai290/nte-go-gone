@@ -145,7 +145,7 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
         <h2>1 · ประเมินมูลค่า<small>รวมทุกล็อตในตู้</small></h2>
         <span class="sample" id="sampleTag">ข้อมูลตัวอย่าง</span>
       </div>
-      <p class="hint">ใส่ Current Estimate ที่เกมแสดงมุมขวาบน หรือประเมินเองเป็นแถว: ชิ้นของ หรือกลุ่มตามความหายาก (เช่น intel บอกว่าของม่วงใช้ 28 ช่อง ให้ใส่จำนวน 28 และราคาต่อช่อง) พิมพ์ 12k หรือ 1.5m ได้</p>
+      <p class="hint">Current Estimate ของเกมนับเฉพาะของที่เห็นเงาแล้ว ให้ใส่ตัวเลขนั้น แล้วใส่<b>เฉพาะของที่ยังไม่เห็น</b>เป็นแถวด้านล่าง เช่น intel บอกว่าของม่วงใช้ 28 ช่อง ใช้ส่วนที่ 4 คำนวณแล้วกด "เพิ่มเข้าการประเมิน" พิมพ์ 12k หรือ 1.5m ได้</p>
       <div class="row">
         <div><label for="gameEst">Current Estimate จากเกม</label><input id="gameEst" inputmode="decimal" placeholder="เช่น 30,452"></div>
       </div>
@@ -172,7 +172,7 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
       <div>
         <label>ใช้มูลค่าไหนในการคำนวณบิด</label>
         <div class="seg" id="basis" role="group" aria-label="มูลค่าที่ใช้">
-          <button type="button" data-v="game">ค่าจากเกม</button>
+          <button type="button" data-v="game">Estimate + ที่ยังไม่เห็น</button>
           <button type="button" data-v="low">ต่ำสุด (ปลอดภัย)</button>
           <button type="button" data-v="mid">กลาง</button>
           <button type="button" data-v="high">สูงสุด (เสี่ยง)</button>
@@ -227,7 +227,7 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
 
     <section class="panel span2" id="history">
       <div class="ph"><h2>ประวัติการประมูล</h2><span class="hint" id="histSum"></span></div>
-      <p class="hint">ใส่ Current Estimate ตอนบิดไว้ด้วย แล้วเครื่องคิดจะเรียนรู้ว่ามูลค่าจริงมักห่างจากค่าที่เกมประเมินกี่เท่า</p>
+      <p class="hint">Estimate ตอนบิดนับแค่ของที่เห็นแล้ว ช่อง "จริง ÷ Est." จึงบอกว่าตอนบิดยังมีของที่มองไม่เห็นอยู่มากแค่ไหน</p>
       <div class="grid-tbl">
         <table>
           <thead><tr><th>วันที่</th><th>รอบ</th><th>ผู้ชนะ</th><th>ราคาที่จ่าย</th><th>Actual Value</th><th>Estimate ตอนบิด</th><th>จริง ÷ Est.</th><th>ผลของคุณ</th><th></th></tr></thead>
@@ -297,8 +297,7 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
   const SAMPLE = {
     sample: true,
     lots: [
-      { name: "ของม่วง (ช่อง)", qty: 28, lo: 700, hi: 1300 },
-      { name: "ของหายากสุด (เงา 1 ชิ้น)", qty: 1, lo: 5000, hi: 15000 }
+      { name: "(ตัวอย่าง) ของม่วงที่ยังไม่เห็น (ช่อง)", qty: 28, lo: 1988, hi: 5096 }
     ],
     gameEst: "30452",
     hintMin: "", hintMax: "", unknownAdd: "",
@@ -409,9 +408,10 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
     document.querySelectorAll("#totals .tot").forEach((d) => d.classList.toggle("sel", d.dataset.k === S.basis));
     document.querySelectorAll("#basis button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.v === S.basis)));
     document.querySelectorAll("#who button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.v === S.who)));
-    const V = S.basis === "game" ? parse(S.gameEst) : T[S.basis];
+    const ge = S.basis === "game" ? (parse(S.gameEst) || 0) : 0;
+    const tLo = ge + T.low, tHi = ge + T.high, tMid = ge + T.mid;
+    const V = S.basis === "game" ? tMid : T[S.basis];
     const haveV = V > 0;
-    const tLo = T.high > 0 ? T.low : V, tHi = T.high > 0 ? T.high : V, tMid = T.high > 0 ? T.mid : V;
 
     const opps = S.opp.map(parse).filter((x) => isFinite(x) && x > 0);
     const top = opps.length ? Math.max(...opps) : NaN;
@@ -439,16 +439,12 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
       const label = m ? `บิดเพื่อชนะทันทีรอบ ${r}` : "บิดเพื่อชนะรอบ 5 (สูงกว่าคู่แข่ง)";
       let html =
         `<p>${label}</p><div class="big">${fmt(need)}</div>` +
-        `<p>คู่แข่งสูงสุด <span class="num">${fmt(top)}</span>${m ? ` × ${m}` : ""} · กำไรที่มูลค่า${{ game: "จากเกม", low: "ต่ำสุด", mid: "กลาง", high: "สูงสุด" }[S.basis]}: <span class="num ${cls(profit)}">${sfmt(profit)}</span> (ช่วง <span class="num ${cls(pLo)}">${sfmt(pLo)}</span> ถึง <span class="num ${cls(pHi)}">${sfmt(pHi)}</span>)</p>`;
+        `<p>คู่แข่งสูงสุด <span class="num">${fmt(top)}</span>${m ? ` × ${m}` : ""} · กำไรที่มูลค่า${{ game: "กลาง (Estimate + ที่ยังไม่เห็น)", low: "ต่ำสุด", mid: "กลาง", high: "สูงสุด" }[S.basis]}: <span class="num ${cls(profit)}">${sfmt(profit)}</span> (ช่วง <span class="num ${cls(pLo)}">${sfmt(pLo)}</span> ถึง <span class="num ${cls(pHi)}">${sfmt(pHi)}</span>)</p>`;
       if (profit < 0) html += `<p>บิดได้คุ้มสุดที่ <span class="num">${fmt(V)}</span> ซึ่ง${m ? `ต้องให้คู่แข่งสูงสุดต่ำกว่า <span class="num">${fmt(V / m)}</span>` : "ต่ำกว่าคู่แข่งแล้ว"}</p>`;
       if (bonusIfTheyWin > 0) html += `<p>ถ้าปล่อยให้คู่แข่งชนะที่ <span class="num">${fmt(top)}</span> เขาขาดทุน และคุณได้โบนัส 10% ≈ <span class="num pos">+${fmt(bonusIfTheyWin)}</span></p>`;
       setVerdict(vEl, kind, pill, html);
     }
-    const rs = S.hist.filter((h) => h.est > 0 && h.actual > 0).map((h) => h.actual / h.est);
-    if (rs.length && S.basis === "game" && haveV) {
-      const avg = rs.reduce((a, b) => a + b, 0) / rs.length;
-      vEl.insertAdjacentHTML("beforeend", `<p class="hint">จากประวัติ ${rs.length} ครั้ง มูลค่าจริงเฉลี่ย ${avg.toFixed(2)}× ของ Estimate ตอนบิด → ประมาณ <span class="num">${fmt(V * avg)}</span></p>`);
-    }
+    if (S.basis === "game" && haveV) vEl.insertAdjacentHTML("beforeend", `<p class="hint">มูลค่าที่ใช้ = Estimate จากเกม <span class="num">${fmt(ge)}</span> + ของที่ยังไม่เห็น <span class="num">${fmt(T.low)}–${fmt(T.high)}</span> → <span class="num">${fmt(tLo)}–${fmt(tHi)}</span></p>`);
 
     /* my bid check */
     const cEl = $("myCheck");
