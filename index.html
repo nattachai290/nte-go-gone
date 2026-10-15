@@ -8,281 +8,261 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
 <style>
-/* Layout: auction ledger — a plum header band, then three stacked panels (value → bid → settle) that sit two-up on wide screens. */
+/* Layout: the auction floor — intel cards in the middle, the lot container grid on the right, totals on top; bid and settlement panels below. Single dark look, like the game. */
 :root {
-  --bg: #f4f1f6;
-  --panel: #ffffff;
-  --ink: #241b2b;
-  --muted: #6d6175;
-  --line: #e3dbe8;
-  --plum: #3a1f4d;
-  --plum-ink: #f6eefb;
-  --gold: #b7791f;
-  --gold-soft: #fbefd9;
-  --good: #1f7a4d;
-  --good-soft: #e1f3e9;
-  --warn: #9a6400;
-  --warn-soft: #fdf0d6;
-  --bad: #b3261e;
-  --bad-soft: #fbe3e1;
-  --field: #faf8fb;
+  color-scheme: dark;
+  --bg: #111015;
+  --panel: #1b1a21;
+  --panel2: #24222c;
+  --line: #34313e;
+  --ink: #f2eff7;
+  --muted: #a49db2;
+  --gold: #f2b33d;
+  --est: #ff9a3c;
+  --intel-a: #2f56a8;
+  --intel-b: #1b2d5c;
+  --cell: #0b0a0e;
+  --cell-line: #26232d;
+  --good: #5fd39a; --good-soft: #15302a;
+  --warn: #f0b955; --warn-soft: #382a10;
+  --bad: #ff8a80; --bad-soft: #3a1a1c;
+  --r-gray: #7a7a82; --r-green: #1fa38a; --r-blue: #2f7fe0; --r-purple: #9b45c9; --r-orange: #e88a33; --r-red: #d8434a; --r-unk: #5a5862;
   --f-display: "Bricolage Grotesque", "IBM Plex Sans Thai", system-ui, sans-serif;
   --f-body: "IBM Plex Sans Thai", "Noto Sans Thai", system-ui, sans-serif;
-  --f-num: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #17111c; --panel: #211928; --ink: #efe7f4; --muted: #a797b2; --line: #362a40;
-    --plum: #2b1639; --plum-ink: #f6eefb; --gold: #e8b04f; --gold-soft: #3a2b12;
-    --good: #5fd39a; --good-soft: #15302a; --warn: #f0b955; --warn-soft: #382a10;
-    --bad: #ff8a80; --bad-soft: #3a1a1c; --field: #1a1320; color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #17111c; --panel: #211928; --ink: #efe7f4; --muted: #a797b2; --line: #362a40;
-  --plum: #2b1639; --plum-ink: #f6eefb; --gold: #e8b04f; --gold-soft: #3a2b12;
-  --good: #5fd39a; --good-soft: #15302a; --warn: #f0b955; --warn-soft: #382a10;
-  --bad: #ff8a80; --bad-soft: #3a1a1c; --field: #1a1320; color-scheme: dark;
+  --f-num: "JetBrains Mono", ui-monospace, Menlo, monospace;
 }
 * { box-sizing: border-box; }
-body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.55; }
-.wrap { max-width: 1120px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
-header.band { background: var(--plum); color: var(--plum-ink); }
-header .wrap { padding-block: 28px 24px; display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: end; justify-content: space-between; }
-h1 { font-family: var(--f-display); font-weight: 800; font-size: clamp(28px, 5vw, 44px); line-height: 1.05; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
-h1 .shell { color: var(--gold); }
-header p { margin: 6px 0 0; opacity: .8; max-width: 60ch; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 1280px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+header .wrap { padding-block: 22px 14px; display: flex; flex-wrap: wrap; gap: 10px 24px; align-items: end; justify-content: space-between; }
+h1 { font-family: var(--f-display); font-weight: 800; font-size: clamp(26px, 4.5vw, 40px); line-height: 1.05; margin: 0; text-wrap: balance; }
+h1 span { color: var(--gold); }
 .mults { display: flex; gap: 6px; flex-wrap: wrap; }
-.mult { font-family: var(--f-num); font-size: 12px; border: 1px solid rgba(255,255,255,.25); border-radius: 6px; padding: 4px 8px; white-space: nowrap; }
+.mult { font-family: var(--f-num); font-size: 12px; border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px; white-space: nowrap; color: var(--muted); }
 .mult b { color: var(--gold); }
-main .wrap { padding-block: 24px 48px; display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr); }
-@media (min-width: 900px) { main .wrap { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); } .span2 { grid-column: 1 / -1; } }
-section.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
-.ph { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
-h2 { font-family: var(--f-display); font-weight: 800; font-size: 22px; margin: 0; }
+main .wrap { padding-block: 8px 48px; display: grid; gap: 18px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 1000px) {
+  main .wrap { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); }
+  .span2 { grid-column: 1 / -1; }
+}
+section.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.ph { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+h2 { font-family: var(--f-display); font-weight: 800; font-size: 21px; margin: 0; }
 h2 small { font-family: var(--f-body); font-weight: 500; font-size: 13px; color: var(--muted); margin-left: 6px; }
 .hint { color: var(--muted); font-size: 13px; margin: 0; }
-label { font-size: 12px; color: var(--muted); letter-spacing: .02em; display: block; margin-bottom: 4px; }
-input, select { font: 500 15px var(--f-num); color: var(--ink); background: var(--field); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; width: 100%; min-width: 0; }
-input.txt { font-family: var(--f-body); }
-input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
-button { font: 600 14px var(--f-body); border-radius: 8px; border: 1px solid var(--line); background: var(--field); color: var(--ink); padding: 8px 12px; cursor: pointer; }
+label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 4px; }
+input, select, textarea { font: 500 15px var(--f-num); color: var(--ink); background: var(--cell); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; width: 100%; min-width: 0; }
+input.txt, textarea.txt { font-family: var(--f-body); }
+input:focus-visible, select:focus-visible, button:focus-visible, textarea:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+button { font: 600 14px var(--f-body); border-radius: 8px; border: 1px solid var(--line); background: var(--panel2); color: var(--ink); padding: 8px 12px; cursor: pointer; }
 button:hover { border-color: var(--gold); }
-button.primary { background: var(--plum); color: var(--plum-ink); border-color: var(--plum); }
+button.primary { background: var(--gold); color: #1a1408; border-color: var(--gold); }
 button.ghost { background: transparent; }
-button.x { padding: 6px 10px; color: var(--muted); }
-.lots { overflow-x: auto; }
-table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
-th { text-align: left; font-size: 12px; color: var(--muted); font-weight: 500; padding: 0 6px 6px; white-space: nowrap; }
-td { padding: 4px 6px; vertical-align: middle; }
-.lots td:first-child { min-width: 130px; }
-.lots td.n { min-width: 96px; }
-.row { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
-.totals { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-.tot { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; min-width: 0; }
-.tot span { display: block; font-size: 12px; color: var(--muted); }
-.tot b { font: 700 clamp(16px, 3.2vw, 22px) var(--f-num); overflow-wrap: anywhere; }
-.tot.sel { border-color: var(--gold); background: var(--gold-soft); }
-.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; flex-wrap: wrap; }
-.seg button { border: 0; border-radius: 0; background: transparent; padding: 7px 12px; }
-.seg button[aria-pressed="true"] { background: var(--plum); color: var(--plum-ink); }
-.rounds { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
-.rounds button { display: flex; flex-direction: column; align-items: center; gap: 0; padding: 8px 4px; }
-.rounds button small { font: 500 12px var(--f-num); color: var(--muted); }
-.rounds button[aria-pressed="true"] { background: var(--plum); color: var(--plum-ink); border-color: var(--plum); }
-.rounds button[aria-pressed="true"] small { color: var(--gold); }
-.verdict { border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; border: 1px solid transparent; }
-.verdict.good { background: var(--good-soft); border-color: color-mix(in srgb, var(--good) 35%, transparent); }
-.verdict.warn { background: var(--warn-soft); border-color: color-mix(in srgb, var(--warn) 35%, transparent); }
-.verdict.bad { background: var(--bad-soft); border-color: color-mix(in srgb, var(--bad) 35%, transparent); }
-.verdict.info { background: var(--field); border-color: var(--line); }
-.pill { align-self: flex-start; font: 700 12px var(--f-body); letter-spacing: .04em; padding: 2px 10px; border-radius: 99px; color: var(--panel); }
-.good .pill { background: var(--good); } .warn .pill { background: var(--warn); } .bad .pill { background: var(--bad); } .info .pill { background: var(--muted); }
-.big { font: 700 clamp(22px, 4.5vw, 30px) var(--f-num); line-height: 1.15; overflow-wrap: anywhere; }
-.verdict p { margin: 0; }
+button.x { padding: 4px 9px; color: var(--muted); background: transparent; }
+.row { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .num { font-family: var(--f-num); font-weight: 700; white-space: nowrap; }
 .pos { color: var(--good); } .neg { color: var(--bad); }
-.grid-tbl { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
-.grid-tbl table td, .grid-tbl table th { padding: 8px 10px; border-top: 1px solid var(--line); font-size: 14px; }
-.grid-tbl table tr:first-child th { border-top: 0; padding-top: 10px; }
-.grid-tbl td.mono { font-family: var(--f-num); }
-.grid-tbl tr.cur td { background: var(--gold-soft); }
-ul.notes { margin: 0; padding-left: 20px; color: var(--muted); font-size: 14px; display: grid; gap: 4px; }
 .sample { font-size: 12px; font-weight: 600; color: var(--gold); border: 1px dashed var(--gold); border-radius: 99px; padding: 1px 8px; }
-.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* estimate bar */
+.estbar { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.estbox { background: var(--panel2); border: 1px solid var(--line); border-radius: 999px; padding: 8px 18px; display: flex; align-items: center; gap: 12px; min-width: 0; }
+.estbox .k { font-weight: 600; font-size: 14px; white-space: nowrap; }
+.estbox .v { font: 700 22px var(--f-num); color: var(--est); overflow-wrap: anywhere; }
+.estbox input { background: transparent; border: 0; font: 700 22px var(--f-num); color: var(--est); padding: 0; }
+.coin { width: 26px; height: 26px; flex: none; border-radius: 7px; background: linear-gradient(135deg, #ffb357, #e86c1c); transform: rotate(12deg); }
+
+/* intel */
+.rounds { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.rounds button { display: flex; flex-direction: column; align-items: center; padding: 7px 4px; }
+.rounds button small { font: 500 12px var(--f-num); color: var(--muted); }
+.rounds button[aria-pressed="true"] { background: var(--gold); color: #1a1408; border-color: var(--gold); }
+.rounds button[aria-pressed="true"] small { color: #4a3510; }
+.roundtitle { text-align: center; font: 800 22px var(--f-display); padding-bottom: 8px; border-bottom: 3px solid var(--gold); }
+.clues { display: flex; flex-direction: column; gap: 10px; }
+.clue { background: linear-gradient(100deg, var(--intel-a), var(--intel-b)); border: 1px solid #3b5fae; border-radius: 12px; padding: 12px 14px; display: flex; gap: 12px; align-items: flex-start; }
+.clue .tag { flex: none; font: 700 12px var(--f-num); background: rgba(0,0,0,.35); border-radius: 6px; padding: 3px 7px; }
+.clue .body { flex: 1; min-width: 0; }
+.clue b { display: block; font-family: var(--f-display); font-size: 17px; }
+.clue p { margin: 2px 0 0; font-size: 14px; color: #d6def3; overflow-wrap: anywhere; }
+.clue.old { opacity: .7; }
+.empty { border: 1px dashed var(--line); border-radius: 12px; padding: 14px; color: var(--muted); font-size: 14px; text-align: center; }
+.addclue { display: grid; gap: 8px; grid-template-columns: 64px minmax(0, 2.2fr) minmax(0, 0.9fr) minmax(0, 1fr) auto; align-items: end; }
+@media (max-width: 640px) { .addclue { grid-template-columns: 1fr 1fr; } .addclue button { grid-column: 1 / -1; } }
+
+/* board */
+.tools { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.rbtn { width: 34px; height: 34px; border-radius: 50%; padding: 0; border: 2px solid transparent; display: grid; place-items: center; font-weight: 800; color: #fff; }
+.rbtn[aria-pressed="true"] { border-color: #fff; box-shadow: 0 0 0 2px var(--gold); }
+.rb-gray { background: var(--r-gray); } .rb-green { background: var(--r-green); } .rb-blue { background: var(--r-blue); } .rb-purple { background: var(--r-purple); } .rb-orange { background: var(--r-orange); } .rb-red { background: var(--r-red); } .rb-unk { background: var(--r-unk); }
+.boardwrap { overflow-x: auto; }
+.board { position: relative; width: 100%; min-width: 300px; background: var(--cell); border-radius: 10px; touch-action: none; user-select: none; -webkit-user-select: none; cursor: crosshair; }
+.cells { position: absolute; inset: 0; display: grid; gap: 2px; padding: 2px; }
+.cells div { background: #17151c; border-radius: 3px; }
+.blk { position: absolute; border-radius: 6px; padding: 3px 5px; display: flex; flex-direction: column; justify-content: flex-end; overflow: hidden; cursor: pointer; border: 2px solid rgba(255,255,255,.18); color: #fff; font-size: 11px; line-height: 1.2; text-shadow: 0 1px 2px rgba(0,0,0,.6); }
+.blk .n { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.blk .v { font: 700 11px var(--f-num); white-space: nowrap; }
+.blk.sel { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold); z-index: 2; }
+.blk.unid { background-image: repeating-linear-gradient(135deg, rgba(255,255,255,.07) 0 6px, transparent 6px 12px) !important; }
+.b-gray { background: linear-gradient(160deg, #858590, #4a4a52); } .b-green { background: linear-gradient(160deg, #22b598, #0f5e50); } .b-blue { background: linear-gradient(160deg, #3a8cf0, #1a438a); } .b-purple { background: linear-gradient(160deg, #a752d6, #561f78); } .b-orange { background: linear-gradient(160deg, #f0963c, #84431a); } .b-red { background: linear-gradient(160deg, #e2525a, #721c22); } .b-unk { background: linear-gradient(160deg, #6a6872, #3a3940); }
+.preview { position: absolute; border: 2px dashed var(--gold); border-radius: 6px; background: rgba(242,179,61,.15); pointer-events: none; }
+.preview.bad { border-color: var(--bad); background: rgba(255,138,128,.15); }
+.inspector { background: var(--panel2); border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.cands { display: grid; gap: 6px; max-height: 260px; overflow-y: auto; }
+.cand { display: flex; justify-content: space-between; gap: 10px; text-align: left; font-weight: 500; }
+.cand[aria-pressed="true"] { border-color: var(--gold); background: #3a2f17; }
 .sw { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: middle; }
-.r-gray { background: #8d8a92; } .r-green { background: #3fae5a; } .r-blue { background: #2f8fe0; } .r-purple { background: #8b45d6; } .r-orange { background: #e8892a; } .r-red { background: #d8343a; }
-.cat td.n { min-width: 70px; }
-.cat td:nth-child(2) { min-width: 110px; }
-.matches { display: grid; gap: 6px; }
-.match { display: flex; justify-content: space-between; gap: 12px; border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; font-size: 14px; }
-textarea { width: 100%; min-height: 90px; font: 13px var(--f-num); color: var(--ink); background: var(--field); border: 1px solid var(--line); border-radius: 8px; padding: 8px; }
+.s-gray { background: var(--r-gray); } .s-green { background: var(--r-green); } .s-blue { background: var(--r-blue); } .s-purple { background: var(--r-purple); } .s-orange { background: var(--r-orange); } .s-red { background: var(--r-red); } .s-unk { background: var(--r-unk); }
+
+/* tables */
+.tbl { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+th { text-align: left; font-size: 12px; color: var(--muted); font-weight: 500; padding: 8px 10px; white-space: nowrap; }
+td { padding: 7px 10px; border-top: 1px solid var(--line); font-size: 14px; vertical-align: middle; }
+td.mono { font-family: var(--f-num); white-space: nowrap; }
+tr.cur td { background: #2f2717; }
+tr.tot td { font-weight: 700; background: var(--panel2); }
+.flag { color: var(--warn); font-size: 12px; }
+
+/* verdicts */
+.verdict { border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; border: 1px solid var(--line); background: var(--panel2); }
+.verdict.good { background: var(--good-soft); border-color: #2a6b4f; }
+.verdict.warn { background: var(--warn-soft); border-color: #6b5220; }
+.verdict.bad { background: var(--bad-soft); border-color: #6b2b2b; }
+.pill { align-self: flex-start; font: 700 12px var(--f-body); padding: 2px 10px; border-radius: 99px; color: #111; background: var(--muted); }
+.good .pill { background: var(--good); } .warn .pill { background: var(--warn); } .bad .pill { background: var(--bad); }
+.big { font: 700 clamp(22px, 4.5vw, 30px) var(--f-num); line-height: 1.15; overflow-wrap: anywhere; }
+.verdict p { margin: 0; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; flex-wrap: wrap; }
+.seg button { border: 0; border-radius: 0; background: transparent; padding: 7px 12px; }
+.seg button[aria-pressed="true"] { background: var(--gold); color: #1a1408; }
+details summary { cursor: pointer; }
+ul.notes { margin: 0; padding-left: 20px; color: var(--muted); font-size: 14px; display: grid; gap: 4px; }
+.tabs { display: flex; gap: 6px; padding-block: 0 10px; }
+.tabs button { border-radius: 999px; padding: 8px 18px; }
+.tabs button[aria-selected="true"] { background: var(--gold); color: #1a1408; border-color: var(--gold); }
 footer { color: var(--muted); font-size: 12px; text-align: center; padding-block: 0 32px; }
-@media (max-width: 520px) { .totals { grid-template-columns: 1fr; } .rounds button { font-size: 13px; } }
-@media (prefers-reduced-motion: no-preference) { .verdict, .tot { transition: background-color .2s, border-color .2s; } }
+@media (prefers-reduced-motion: no-preference) { .blk { transition: box-shadow .15s, border-color .15s; } }
 </style>
 </head>
 <body>
 
-<header class="band">
+
+<header>
   <div class="wrap">
-    <div>
-      <h1>Going, Going, <span class="shell">Gone!</span></h1>
-      <p>ตัวช่วยประเมินมูลค่าล็อต คำนวณราคาบิดชนะทันที และสรุปกำไร/ขาดทุนเป็น Gold Shells</p>
-    </div>
+    <h1>Going, Going, <span>Gone!</span></h1>
     <div class="mults" aria-label="เงื่อนไขชนะทันที">
       <span class="mult">R1 &gt; <b>2×</b></span><span class="mult">R2 &gt; <b>1.6×</b></span><span class="mult">R3 &gt; <b>1.3×</b></span><span class="mult">R4 &gt; <b>1.1×</b></span><span class="mult">R5 <b>สูงสุดชนะ</b></span>
     </div>
   </div>
 </header>
 
+<nav class="wrap tabs" role="tablist">
+  <button type="button" role="tab" id="tabBtnAuction" aria-selected="true">ประมูล</button>
+  <button type="button" role="tab" id="tabBtnCat" aria-selected="false">คลังของสะสม</button>
+</nav>
 <main>
-  <div class="wrap">
+  <div class="wrap" id="tabAuction">
+    <div class="estbar span2">
+      <div class="estbox"><span class="coin" aria-hidden="true"></span><label for="gameEst" class="k" style="margin:0;color:var(--ink)">Current Estimate</label><input id="gameEst" inputmode="decimal" placeholder="จากเกม"></div>
+      <div class="estbox"><span class="coin" aria-hidden="true" style="background:linear-gradient(135deg,#ffd76a,#c9901c)"></span><span class="k">ประเมินรวม</span><span class="v" id="estRange">–</span></div>
+      <div class="actions" style="justify-content:flex-end"><span class="sample" id="sampleTag">ตัวอย่าง</span><button type="button" id="newRoom" class="primary">เริ่มห้องใหม่</button></div>
+    </div>
 
-    <!-- 1. Lot appraisal -->
-    <section class="panel" id="appraise">
-      <div class="ph">
-        <h2>1 · ประเมินมูลค่า<small>รวมทุกล็อตในตู้</small></h2>
-        <span class="sample" id="sampleTag">ข้อมูลตัวอย่าง</span>
+    <!-- intel -->
+    <section class="panel" id="intel">
+      <div class="roundtitle" id="roundTitle">Auction Round 1</div>
+      <div class="rounds" id="rounds" role="group" aria-label="รอบปัจจุบัน"></div>
+      <div class="clues" id="clueList"></div>
+      <div class="addclue">
+        <div><label for="cRound">รอบ</label><select id="cRound"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></div>
+        <div><label for="cType">คำใบ้</label><select id="cType">
+          <option value="slots">Slot Device · ช่องรวมของสี</option>
+          <option value="count">Count Device · จำนวนชิ้นของสี</option>
+          <option value="value">Valuation Device · มูลค่ารวมของสี</option>
+          <option value="avg">Average Value Device · มูลค่าเฉลี่ยของสี</option>
+          <option value="total">มูลค่ารวมทั้งตู้</option>
+          <option value="note">ข้อความอื่น / โน้ต</option>
+        </select></div>
+        <div id="cRWrap"><label for="cR">สี</label><select id="cR"></select></div>
+        <div id="cNWrap"><label for="cN" id="cNLabel">จำนวน</label><input id="cN" inputmode="decimal" placeholder="เช่น 28"></div>
+        <button type="button" id="addClue">+ เพิ่มคำใบ้</button>
       </div>
-      <p class="hint">Current Estimate ของเกมนับเฉพาะของที่เห็นเงาแล้ว ให้ใส่ตัวเลขนั้น แล้วใส่<b>เฉพาะของที่ยังไม่เห็น</b>เป็นแถวด้านล่าง เช่น intel บอกว่าของม่วงใช้ 28 ช่อง ใช้ส่วนที่ 4 คำนวณแล้วกด "เพิ่มเข้าการประเมิน" พิมพ์ 12k หรือ 1.5m ได้</p>
-      <div class="row">
-        <div><label for="gameEst">Current Estimate จากเกม</label><input id="gameEst" inputmode="decimal" placeholder="เช่น 30,452"></div>
-      </div>
-      <div class="lots">
-        <table>
-          <thead><tr><th>ชิ้น</th><th>จำนวน / ช่อง</th><th>ต่ำสุด / หน่วย</th><th>สูงสุด / หน่วย</th><th></th></tr></thead>
-          <tbody id="lotBody"></tbody>
-        </table>
-      </div>
-      <div class="actions">
-        <button id="addLot" type="button">+ เพิ่มชิ้น</button>
-        <button id="clearLots" type="button" class="ghost">ล้างทั้งหมด</button>
-      </div>
-      <div class="row">
-        <div><label for="hintMin">intel: มูลค่ารวมไม่ต่ำกว่า</label><input id="hintMin" inputmode="decimal" placeholder="ไม่ทราบ"></div>
-        <div><label for="hintMax">intel: มูลค่ารวมไม่เกิน</label><input id="hintMax" inputmode="decimal" placeholder="ไม่ทราบ"></div>
-        <div><label for="unknownAdd">ชิ้นที่ยังไม่รู้ (บวกเพิ่มโดยประมาณ)</label><input id="unknownAdd" inputmode="decimal" placeholder="0"></div>
-      </div>
-      <div class="totals" id="totals">
-        <div class="tot" data-k="low"><span>ต่ำสุด</span><b id="tLow">0</b></div>
-        <div class="tot" data-k="mid"><span>กลาง</span><b id="tMid">0</b></div>
-        <div class="tot" data-k="high"><span>สูงสุด</span><b id="tHigh">0</b></div>
-      </div>
-      <div>
-        <label>ใช้มูลค่าไหนในการคำนวณบิด</label>
-        <div class="seg" id="basis" role="group" aria-label="มูลค่าที่ใช้">
-          <button type="button" data-v="game">Estimate + ที่ยังไม่เห็น</button>
-          <button type="button" data-v="low">ต่ำสุด (ปลอดภัย)</button>
-          <button type="button" data-v="mid">กลาง</button>
-          <button type="button" data-v="high">สูงสุด (เสี่ยง)</button>
-        </div>
-      </div>
+      <p class="hint">ผลจาก Size Device (เงา), Evaluation Device (สี) และ Appraisal Device (เปิดของ) ให้วาดลงตารางแล้วเลือกสีหรือชิ้นของ คำใบ้ที่เป็นตัวเลข (ช่อง ชิ้น มูลค่า) จะถูกใช้คำนวณช่วงราคาของที่ยังไม่เห็นให้อัตโนมัติ</p>
     </section>
 
-    <!-- 2. Bid helper -->
+    <!-- board -->
+    <section class="panel" id="lot">
+      <div class="ph">
+        <h2>ตู้ล็อต<small>ลากบนตารางเพื่อวาดเงาของ</small></h2>
+        <div class="actions"><button type="button" id="rowMinus" class="ghost" aria-label="ลดแถว">− แถว</button><span class="hint" id="rowCount"></span><button type="button" id="rowPlus" class="ghost" aria-label="เพิ่มแถว">+ แถว</button></div>
+      </div>
+      <div class="tools" id="tools" role="group" aria-label="สีของเงาที่จะวาด"></div>
+      <div class="boardwrap"><div class="board" id="board"><div class="cells" id="cells"></div></div></div>
+      <div class="inspector" id="inspector"></div>
+    </section>
+
+    <!-- breakdown -->
+    <section class="panel span2" id="breakdown">
+      <div class="ph"><h2>มูลค่าแยกตามสี</h2><span class="hint" id="breakHint"></span></div>
+      <div class="tbl"><table>
+        <thead><tr><th>สี</th><th>บนตาราง</th><th>คำใบ้</th><th>ต่ำสุด</th><th>สูงสุด</th><th>หมายเหตุ</th></tr></thead>
+        <tbody id="breakBody"></tbody>
+      </table></div>
+    </section>
+
+    <!-- bid -->
     <section class="panel" id="bid">
-      <div class="ph"><h2>2 · ตัวช่วยบิด<small>รอบปัจจุบัน</small></h2></div>
-      <div class="rounds" id="rounds" role="group" aria-label="เลือกรอบ"></div>
-      <p class="hint">ใส่บิดของคู่แข่งทั้ง 3 คน (จากรอบก่อน หรือที่คาดว่าจะบิดรอบนี้) และบิดที่คุณตั้งใจจะใส่</p>
+      <div class="ph"><h2>ตัวช่วยบิด<small id="bidRound"></small></h2>
+        <div class="seg" id="basis" role="group" aria-label="มูลค่าที่ใช้">
+          <button type="button" data-v="lo">ต่ำสุด</button><button type="button" data-v="mid">กลาง</button><button type="button" data-v="hi">สูงสุด</button>
+        </div>
+      </div>
       <div class="row">
         <div><label for="opp1">คู่แข่ง A</label><input id="opp1" inputmode="decimal" placeholder="0"></div>
         <div><label for="opp2">คู่แข่ง B</label><input id="opp2" inputmode="decimal" placeholder="0"></div>
         <div><label for="opp3">คู่แข่ง C</label><input id="opp3" inputmode="decimal" placeholder="0"></div>
         <div><label for="myBid">บิดของคุณ</label><input id="myBid" inputmode="decimal" placeholder="0"></div>
       </div>
-      <div class="verdict info" id="verdict"></div>
-      <div class="verdict info" id="myCheck"></div>
+      <div class="verdict" id="verdict"></div>
+      <div class="verdict" id="myCheck"></div>
     </section>
 
-    <!-- Rounds table -->
-    <section class="panel span2" id="ladder">
+    <section class="panel" id="ladder">
       <div class="ph"><h2>เพดานชนะทันทีทุกรอบ</h2></div>
-      <p class="hint">"คู่แข่งสูงสุดไม่เกิน" = ถ้าบิดสูงสุดของคู่แข่งต่ำกว่าตัวเลขนี้ คุณบิดเท่ามูลค่าประเมินแล้วชนะทันทีโดยไม่ขาดทุน</p>
-      <div class="grid-tbl">
-        <table>
-          <thead><tr><th>รอบ</th><th>เงื่อนไข</th><th>บิดชนะทันทีขั้นต่ำ</th><th>กำไรถ้าชนะ (ต่ำ / กลาง / สูง)</th><th>คู่แข่งสูงสุดไม่เกิน</th></tr></thead>
-          <tbody id="ladderBody"></tbody>
-        </table>
-      </div>
+      <p class="hint">"คู่แข่งสูงสุดไม่เกิน" = ถ้าบิดสูงสุดของคู่แข่งต่ำกว่านี้ คุณบิดเท่ามูลค่าที่ใช้แล้วชนะทันทีโดยไม่ขาดทุน</p>
+      <div class="tbl"><table>
+        <thead><tr><th>รอบ</th><th>บิดชนะทันทีขั้นต่ำ</th><th>กำไร (ต่ำ / กลาง / สูง)</th><th>คู่แข่งสูงสุดไม่เกิน</th></tr></thead>
+        <tbody id="ladderBody"></tbody>
+      </table></div>
     </section>
 
-    <!-- 3. Settlement -->
-    <section class="panel" id="settle">
-      <div class="ph"><h2>3 · สรุปผล<small>หลังประมูลจบ</small></h2></div>
-      <div class="row">
-        <div><label for="winBid">ราคาที่ผู้ชนะจ่าย</label><input id="winBid" inputmode="decimal" placeholder="0"></div>
-        <div><label for="realVal">Actual Value</label><input id="realVal" inputmode="decimal" placeholder="0"></div>
-        <div><label for="sellVal">Sell Value (Quick Sell)</label><input id="sellVal" inputmode="decimal" placeholder="ไม่บังคับ"></div>
-        <div><label for="estAtBid">Current Estimate ตอนบิด</label><input id="estAtBid" inputmode="decimal" placeholder="ไม่บังคับ"></div>
-        <div><label for="winRound">ชนะรอบที่</label><select id="winRound"><option value="1">รอบ 1</option><option value="2">รอบ 2</option><option value="3">รอบ 3</option><option value="4">รอบ 4</option><option value="5">รอบ 5</option><option value="6">รอบ 6</option></select></div>
-      </div>
-      <div class="seg" id="who" role="group" aria-label="ใครชนะ">
-        <button type="button" data-v="me">ฉันชนะ</button>
-        <button type="button" data-v="other">คนอื่นชนะ</button>
-      </div>
-      <div class="verdict info" id="settleOut"></div>
-      <div class="actions"><button type="button" class="primary" id="saveRes">บันทึกผลลงประวัติ</button><span class="hint" id="saveMsg" aria-live="polite"></span></div>
-    </section>
-
-    <section class="panel span2" id="history">
-      <div class="ph"><h2>ประวัติการประมูล</h2><span class="hint" id="histSum"></span></div>
-      <p class="hint">Estimate ตอนบิดนับแค่ของที่เห็นแล้ว ช่อง "จริง ÷ Est." จึงบอกว่าตอนบิดยังมีของที่มองไม่เห็นอยู่มากแค่ไหน</p>
-      <div class="grid-tbl">
-        <table>
-          <thead><tr><th>วันที่</th><th>รอบ</th><th>ผู้ชนะ</th><th>ราคาที่จ่าย</th><th>Actual Value</th><th>Estimate ตอนบิด</th><th>จริง ÷ Est.</th><th>ผลของคุณ</th><th></th></tr></thead>
-          <tbody id="histBody"></tbody>
-        </table>
-      </div>
-    </section>
-
-    <section class="panel span2" id="catalog">
-      <div class="ph"><h2>4 · คลังของสะสม<small>ใช้ทายว่าของที่ออกน่าจะเป็นอะไร</small></h2><span class="hint" id="catCount"></span></div>
-      <p class="hint">คลังมีของครบทุกชิ้นใน Collectibles Index แล้ว (227 ชิ้น ณ 15 ต.ค. 2026) ถ้าเกมเพิ่มของใหม่ เพิ่มเองได้ ของขนาดอื่นเพิ่มเองได้ จดของที่เคยเห็นในเกม: ความหายาก ขนาด (กว้าง × สูง เป็นช่อง) และราคา ในเกมแตะที่เงาของแล้วจะเห็นรายการของที่เป็นไปได้พร้อมราคา ให้จดลงที่นี่ ยิ่งจดเยอะ ยิ่งทายแม่น</p>
-      <div class="lots cat">
-        <table>
-          <thead><tr><th>ชื่อ</th><th>ความหายาก</th><th>กว้าง</th><th>สูง</th><th>ราคา</th><th></th></tr></thead>
-          <tbody id="catBody"></tbody>
-        </table>
-      </div>
-      <div class="actions"><button type="button" id="addCat">+ เพิ่มของ</button><select id="catFilter" aria-label="แสดงเฉพาะสี" style="width:auto"></select></div>
-      <div style="display:grid;gap:20px;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))">
-        <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
-          <h3 style="margin:0;font-family:var(--f-display)">ทายของจากเงา</h3>
-          <div class="row">
-            <div><label for="silR">ความหายาก</label><select id="silR"></select></div>
-            <div><label for="silW">กว้าง</label><input id="silW" inputmode="numeric" placeholder="ช่อง"></div>
-            <div><label for="silH">สูง</label><input id="silH" inputmode="numeric" placeholder="ช่อง"></div>
-          </div>
-          <div class="verdict info" id="silOut"></div>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
-          <h3 style="margin:0;font-family:var(--f-display)">แตกจำนวนช่องตามสี</h3>
-          <div class="row">
-            <div><label for="fillR">ความหายาก</label><select id="fillR"></select></div>
-            <div><label for="fillN">จำนวนช่อง (จาก intel)</label><input id="fillN" inputmode="numeric" placeholder="เช่น 28"></div>
-          </div>
-          <div class="verdict info" id="fillOut"></div>
-        </div>
-      </div>
-      <details>
-        <summary class="hint" style="cursor:pointer">สำรอง / นำเข้าคลัง (JSON)</summary>
-        <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
-          <textarea id="catJson" aria-label="ข้อมูลคลัง JSON"></textarea>
-          <div class="actions"><button type="button" id="catCopy">คัดลอก</button><button type="button" id="catImport">นำเข้าจากกล่องนี้</button><span class="hint" id="catMsg" aria-live="polite"></span></div>
-        </div>
-      </details>
-    </section>
-
-    <section class="panel span2" id="rules">
+    <section class="panel" id="rules">
       <div class="ph"><h2>กติกาที่ใช้คำนวณ</h2></div>
       <ul class="notes">
-        <li>ประมูล 5 รอบ ชนะทันทีเมื่อบิดมากกว่าบิดอันดับ 2 คูณ 2× / 1.6× / 1.3× / 1.1× ในรอบ 1–4 (ต้องมากกว่า ไม่ใช่เท่ากับ)</li>
-        <li>รอบ 5 บิดสูงสุดชนะทั้งหมด ถ้าเสมอจะไปรอบ 6 เฉพาะคนที่เสมอ บิดรอบ 6 ต้องไม่น้อยกว่าบิดรอบ 5 ของตัวเอง ถ้าเสมออีกจะไม่มีการขาย</li>
-        <li>ถ้าผู้ชนะขาดทุนตอนสรุปผล อีก 3 คนได้โบนัสคนละ 10% ของยอดขาดทุน ดังนั้นการดันราคาให้คู่แข่งจ่ายเกินมูลค่าก็ได้ Gold Shells</li>
-        <li>เครื่องคิดนี้ถือว่าบิดเป็นจำนวนเต็ม บิดชนะทันทีขั้นต่ำ = ปัดลงของ (บิดคู่แข่งสูงสุด × ตัวคูณ) + 1</li>
+        <li>ชนะทันทีเมื่อบิดมากกว่าบิดอันดับ 2 คูณ 2× / 1.6× / 1.3× / 1.1× ในรอบ 1–4 รอบ 5 บิดสูงสุดชนะ</li>
+        <li>รอบ 5 เสมอไปรอบ 6 บิดรอบ 6 ต้องไม่น้อยกว่ารอบ 5 ของตัวเอง เสมออีกครั้งไม่มีการขาย</li>
+        <li>ผู้ชนะขาดทุน อีก 3 คนได้โบนัสคนละ 10% ของยอดขาดทุน</li>
+        <li>Current Estimate ของเกมนับเฉพาะของที่เปิดเงาแล้ว ส่วน "ประเมินรวม" รวมของที่ยังไม่เห็นจากคำใบ้ด้วย</li>
+        <li>เงาที่ยังไม่รู้ว่าเป็นชิ้นไหน ใช้ราคาต่ำสุดถึงสูงสุดของของในคลังที่สีและขนาดตรงกัน (นับแบบหมุนด้วย)</li>
       </ul>
-      <div class="actions"><button type="button" id="resetAll" class="ghost">รีเซ็ตทุกอย่างกลับเป็นตัวอย่าง</button></div>
+    </section>
+
+  </div>
+  <div class="wrap" id="tabCat" hidden>
+    <section class="panel">
+      <div class="ph"><h2>คลังของสะสม<small id="catCount"></small></h2></div>
+      <p class="hint">ของทุกชิ้นใน Collectibles Index (ณ 15 ต.ค. 2026) ขนาดเป็นกว้าง × สูง เป็นช่อง</p>
+      <div class="row">
+        <div><label for="catR">สี</label><select id="catR"></select></div>
+        <div><label for="catSize">ขนาด</label><select id="catSize"></select></div>
+        <div><label for="catQ">ค้นหาชื่อ</label><input id="catQ" class="txt" placeholder="เช่น Vase"></div>
+      </div>
+      <div class="tbl"><table>
+        <thead><tr><th>ชื่อ</th><th>สี</th><th>ขนาด</th><th>ราคา</th><th>ต่อช่อง</th></tr></thead>
+        <tbody id="catBody"></tbody>
+      </table></div>
     </section>
   </div>
 </main>
@@ -290,380 +270,426 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
 
 <script>
 (function () {
+  const COLS = 10;
   const MULTS = [2, 1.6, 1.3, 1.1, null];
-  const KEY = "ggg-calc-v4";
-  const BUILTIN_VER = 10;
+  const KEY = "ggg-calc-v5";
   const BUILTIN = [{"n": "Eternal Heart", "r": "red", "w": 1, "h": 1, "v": 1314520}, {"n": "Cloudveil Cup", "r": "red", "w": 1, "h": 1, "v": 500000}, {"n": "\"Geometric\" Decor", "r": "red", "w": 1, "h": 1, "v": 61803}, {"n": "Chaotic Core", "r": "red", "w": 1, "h": 1, "v": 61740}, {"n": "Teardrop", "r": "red", "w": 1, "h": 1, "v": 50000}, {"n": "Crimson Gem", "r": "orange", "w": 1, "h": 1, "v": 9938}, {"n": "Nekomaru Tonkotsu Ramen", "r": "orange", "w": 1, "h": 1, "v": 9040}, {"n": "Laurel Crown", "r": "orange", "w": 1, "h": 1, "v": 7648}, {"n": "Starfish", "r": "orange", "w": 1, "h": 1, "v": 5555}, {"n": "Page 23", "r": "orange", "w": 1, "h": 1, "v": 5047}, {"n": "Light Cube", "r": "orange", "w": 1, "h": 1, "v": 5041}, {"n": "Sunset Pearl", "r": "orange", "w": 1, "h": 1, "v": 4975}, {"n": "Caged Feather Fragment", "r": "purple", "w": 1, "h": 1, "v": 5096}, {"n": "Gluttonous Eye", "r": "purple", "w": 1, "h": 1, "v": 3060}, {"n": "Azure Melody", "r": "purple", "w": 1, "h": 1, "v": 3037}, {"n": "Moonlit Sand", "r": "purple", "w": 1, "h": 1, "v": 2441}, {"n": "Ghosted", "r": "purple", "w": 1, "h": 1, "v": 2040}, {"n": "Brine Chestnut", "r": "purple", "w": 1, "h": 1, "v": 2036}, {"n": "Sunset Blush Diamond", "r": "purple", "w": 1, "h": 1, "v": 2036}, {"n": "Firework Seafood Paella", "r": "purple", "w": 1, "h": 1, "v": 2035}, {"n": "Compressed Paper Box", "r": "purple", "w": 1, "h": 1, "v": 2028}, {"n": "Rainbow Capsule", "r": "purple", "w": 1, "h": 1, "v": 2011}, {"n": "Cotton Heart", "r": "purple", "w": 1, "h": 1, "v": 2001}, {"n": "Gilded Eardrop", "r": "purple", "w": 1, "h": 1, "v": 1997}, {"n": "Bouncy Ball", "r": "purple", "w": 1, "h": 1, "v": 1992}, {"n": "Sparkling Konpeitō", "r": "purple", "w": 1, "h": 1, "v": 1988}, {"n": "Blue Glaze Vase", "r": "blue", "w": 1, "h": 1, "v": 1616}, {"n": "Manga", "r": "blue", "w": 1, "h": 1, "v": 1114}, {"n": "Silver Bell", "r": "blue", "w": 1, "h": 1, "v": 1094}, {"n": "Twisty Cookies", "r": "blue", "w": 1, "h": 1, "v": 1021}, {"n": "Boxer's Fighting Spirit", "r": "blue", "w": 1, "h": 1, "v": 1012}, {"n": "VitalMax Energy Bar", "r": "blue", "w": 1, "h": 1, "v": 1012}, {"n": "Dreamless Seed", "r": "blue", "w": 1, "h": 1, "v": 1012}, {"n": "Master Dart (TBD)", "r": "blue", "w": 1, "h": 1, "v": 996}, {"n": "Retro Lampshade", "r": "blue", "w": 1, "h": 1, "v": 995}, {"n": "Puka Sweet Dreams Marshmallow", "r": "blue", "w": 1, "h": 1, "v": 995}, {"n": "Fluffy Reply", "r": "blue", "w": 1, "h": 1, "v": 993}, {"n": "Fluffy Approval", "r": "green", "w": 1, "h": 1, "v": 813}, {"n": "Golden Moon", "r": "green", "w": 1, "h": 1, "v": 610}, {"n": "Fluffball", "r": "green", "w": 1, "h": 1, "v": 602}, {"n": "Geometric Light", "r": "green", "w": 1, "h": 1, "v": 561}, {"n": "Charcoal Grilled Crispy BBQ", "r": "green", "w": 1, "h": 1, "v": 557}, {"n": "Bouncy Ball", "r": "green", "w": 1, "h": 1, "v": 548}, {"n": "Soap", "r": "green", "w": 1, "h": 1, "v": 509}, {"n": "Golden Flying Ball", "r": "green", "w": 1, "h": 1, "v": 498}, {"n": "Gold Gilded Basin", "r": "green", "w": 1, "h": 1, "v": 496}, {"n": "Carved Floral Bowl", "r": "gray", "w": 1, "h": 1, "v": 110}, {"n": "Rain-sweeping Dust", "r": "gray", "w": 1, "h": 1, "v": 110}, {"n": "Fuzzy Cloud", "r": "gray", "w": 1, "h": 1, "v": 101}, {"n": "Puka Lucky Star", "r": "gray", "w": 1, "h": 1, "v": 100}, {"n": "Brand New Marble", "r": "gray", "w": 1, "h": 1, "v": 100}, {"n": "Buni Fruit", "r": "gray", "w": 1, "h": 1, "v": 99}, {"n": "Refreshing Glacier", "r": "gray", "w": 1, "h": 1, "v": 99}, {"n": "Gubichi Original Flavor Chips", "r": "gray", "w": 1, "h": 1, "v": 99}, {"n": "Greenwood", "r": "gray", "w": 1, "h": 1, "v": 99}, {"n": "Data Vault", "r": "red", "w": 2, "h": 1, "v": 5121024}, {"n": "Chiming Pendant", "r": "red", "w": 2, "h": 1, "v": 78800}, {"n": "Thoth USB Drive", "r": "red", "w": 2, "h": 1, "v": 76008}, {"n": "Crunchy Tempura Rice Bowl", "r": "red", "w": 2, "h": 1, "v": 29977}, {"n": "Azure Eye", "r": "orange", "w": 2, "h": 1, "v": 60285}, {"n": "Watchmen - Elite", "r": "orange", "w": 2, "h": 1, "v": 37558}, {"n": "Grand Slam Hand Roll", "r": "orange", "w": 2, "h": 1, "v": 7610}, {"n": "Silent Petal", "r": "orange", "w": 2, "h": 1, "v": 7547}, {"n": "Strange Firestone", "r": "purple", "w": 2, "h": 1, "v": 7639}, {"n": "Jade Cutter", "r": "purple", "w": 2, "h": 1, "v": 6011}, {"n": "Universal Remote", "r": "purple", "w": 2, "h": 1, "v": 4557}, {"n": "Portable Sensor Light", "r": "purple", "w": 2, "h": 1, "v": 4484}, {"n": "Autumn Maple Paperweight", "r": "purple", "w": 2, "h": 1, "v": 3675}, {"n": "Taishou Takoyaki", "r": "purple", "w": 2, "h": 1, "v": 3667}, {"n": "Two-Tone Ice Pop", "r": "purple", "w": 2, "h": 1, "v": 3666}, {"n": "Broken Guard", "r": "blue", "w": 2, "h": 1, "v": 2139}, {"n": "Fluffy Figurine", "r": "blue", "w": 2, "h": 1, "v": 2101}, {"n": "Butterfly Badge", "r": "blue", "w": 2, "h": 1, "v": 2095}, {"n": "Cooly Cool Pain Relief", "r": "blue", "w": 2, "h": 1, "v": 1815}, {"n": "Retro Round Table", "r": "blue", "w": 2, "h": 1, "v": 1682}, {"n": "Handheld Console", "r": "green", "w": 2, "h": 1, "v": 1216}, {"n": "Cruise Skates", "r": "green", "w": 2, "h": 1, "v": 1210}, {"n": "Colorful T-Rex", "r": "green", "w": 2, "h": 1, "v": 1197}, {"n": "Colorful Tailfin", "r": "green", "w": 2, "h": 1, "v": 1070}, {"n": "Ebisu Royal Tower", "r": "green", "w": 2, "h": 1, "v": 1056}, {"n": "On Track", "r": "green", "w": 2, "h": 1, "v": 1055}, {"n": "Chip-Eating Finger Washer", "r": "green", "w": 2, "h": 1, "v": 1040}, {"n": "Charcoal Grilled Mackerel", "r": "green", "w": 2, "h": 1, "v": 893}, {"n": "Blade Forging Stone", "r": "gray", "w": 2, "h": 1, "v": 167}, {"n": "Stringblade", "r": "red", "w": 3, "h": 1, "v": 8989898}, {"n": "Favorite Pizza", "r": "red", "w": 3, "h": 1, "v": 29977}, {"n": "Vine-Pattern Chopsticks", "r": "orange", "w": 3, "h": 1, "v": 20238}, {"n": "Crown Called Nobility", "r": "orange", "w": 3, "h": 1, "v": 18193}, {"n": "Weather Guide", "r": "orange", "w": 3, "h": 1, "v": 15024}, {"n": "Knight Decal", "r": "orange", "w": 3, "h": 1, "v": 12164}, {"n": "Freewire Cable", "r": "orange", "w": 3, "h": 1, "v": 11974}, {"n": "DynamiK Triangle", "r": "green", "w": 3, "h": 1, "v": 1822}, {"n": "Golden Arowana", "r": "orange", "w": 4, "h": 1, "v": 111111}, {"n": "Crystal Tail", "r": "orange", "w": 4, "h": 1, "v": 101403}, {"n": "Doodle Board", "r": "blue", "w": 4, "h": 1, "v": 3502}, {"n": "Radiant Scepter", "r": "red", "w": 5, "h": 1, "v": 288888}, {"n": "Cool-lala Spicy Snack", "r": "red", "w": 1, "h": 2, "v": 280000}, {"n": "Traveler's Stone", "r": "red", "w": 1, "h": 2, "v": 150051}, {"n": "Byte Bread", "r": "orange", "w": 1, "h": 2, "v": 60040}, {"n": "Gilded Ring", "r": "orange", "w": 1, "h": 2, "v": 38316}, {"n": "Yellow Glaze Vase", "r": "orange", "w": 1, "h": 2, "v": 13632}, {"n": "Cubox Technologies Smartwatch", "r": "orange", "w": 1, "h": 2, "v": 7500}, {"n": "Golden Hash Browns", "r": "purple", "w": 1, "h": 2, "v": 7463}, {"n": "Red Glaze Vase", "r": "purple", "w": 1, "h": 2, "v": 5997}, {"n": "Celadon Vase", "r": "purple", "w": 1, "h": 2, "v": 5959}, {"n": "Oceanheart Blue", "r": "purple", "w": 1, "h": 2, "v": 4590}, {"n": "Aural Crystal", "r": "purple", "w": 1, "h": 2, "v": 4481}, {"n": "Knots", "r": "purple", "w": 1, "h": 2, "v": 3652}, {"n": "Ring Meditation", "r": "purple", "w": 1, "h": 2, "v": 3644}, {"n": "Spring Blossom Paperweight", "r": "purple", "w": 1, "h": 2, "v": 3584}, {"n": "Kokoro Rider L1 - Meteoric Hunt", "r": "blue", "w": 1, "h": 2, "v": 3232}, {"n": "Kokoro Rider L2 - Victorious Rebel", "r": "blue", "w": 1, "h": 2, "v": 2439}, {"n": "Kokoro Rider L3 - Soaring Knight", "r": "blue", "w": 1, "h": 2, "v": 2432}, {"n": "Broken Hilt", "r": "blue", "w": 1, "h": 2, "v": 2139}, {"n": "Tayge Air Freshener", "r": "blue", "w": 1, "h": 2, "v": 1795}, {"n": "Boiling Flame", "r": "blue", "w": 1, "h": 2, "v": 1642}, {"n": "Exclusive Customer Service", "r": "blue", "w": 1, "h": 2, "v": 1632}, {"n": "Baking Buddies Matcha Powder", "r": "green", "w": 1, "h": 2, "v": 1353}, {"n": "Danzaburou Doll", "r": "green", "w": 1, "h": 2, "v": 1220}, {"n": "Drifting Kite", "r": "green", "w": 1, "h": 2, "v": 1072}, {"n": "Chiyo Family Brew", "r": "green", "w": 1, "h": 2, "v": 1046}, {"n": "Brittle Rusted Blade", "r": "green", "w": 1, "h": 2, "v": 1046}, {"n": "Dream Cocoon", "r": "green", "w": 1, "h": 2, "v": 918}, {"n": "Little Sparrow", "r": "green", "w": 1, "h": 2, "v": 911}, {"n": "Ink-Stained Vase", "r": "green", "w": 1, "h": 2, "v": 909}, {"n": "Artwork: Flower Field", "r": "gray", "w": 1, "h": 2, "v": 241}, {"n": "Artwork: Deconstruction", "r": "gray", "w": 1, "h": 2, "v": 240}, {"n": "Playing Cards", "r": "gray", "w": 1, "h": 2, "v": 183}, {"n": "Fresh Egg", "r": "gray", "w": 1, "h": 2, "v": 178}, {"n": "Azure Cascade", "r": "red", "w": 2, "h": 2, "v": 11235813}, {"n": "Preserved Flower Wreath", "r": "red", "w": 2, "h": 2, "v": 200201}, {"n": "Brand-New Limited Volleyball", "r": "red", "w": 2, "h": 2, "v": 88600}, {"n": "Starshaker", "r": "red", "w": 2, "h": 2, "v": 31618}, {"n": "Double-Neck Jade Bottle - White", "r": "orange", "w": 2, "h": 2, "v": 80754}, {"n": "Oceanic Dewdrops", "r": "orange", "w": 2, "h": 2, "v": 19926}, {"n": "Universal Adapter", "r": "orange", "w": 2, "h": 2, "v": 18031}, {"n": "Blueflame Spark Plug", "r": "orange", "w": 2, "h": 2, "v": 15108}, {"n": "Snowfall Emerald", "r": "orange", "w": 2, "h": 2, "v": 15037}, {"n": "Cubox Technologies Power Bank", "r": "orange", "w": 2, "h": 2, "v": 11981}, {"n": "Nacupeda Model", "r": "purple", "w": 2, "h": 2, "v": 10029}, {"n": "Phonograph", "r": "purple", "w": 2, "h": 2, "v": 9946}, {"n": "Smart Pen Holder", "r": "purple", "w": 2, "h": 2, "v": 8177}, {"n": "Golden Crescent", "r": "purple", "w": 2, "h": 2, "v": 8128}, {"n": "Blue and White Porcelain Bowl", "r": "purple", "w": 2, "h": 2, "v": 7996}, {"n": "Bunny Box", "r": "purple", "w": 2, "h": 2, "v": 7222}, {"n": "Cubox Technologies Headset", "r": "purple", "w": 2, "h": 2, "v": 5997}, {"n": "Four-Corner Cube", "r": "purple", "w": 2, "h": 2, "v": 5955}, {"n": "Cubox Technologies Phone", "r": "blue", "w": 2, "h": 2, "v": 8848}, {"n": "Scale Pattern", "r": "blue", "w": 2, "h": 2, "v": 3677}, {"n": "Covetous Coin", "r": "blue", "w": 2, "h": 2, "v": 3618}, {"n": "Tomato 100 Jelly", "r": "blue", "w": 2, "h": 2, "v": 3185}, {"n": "Lotus C198 Record Player", "r": "green", "w": 2, "h": 2, "v": 1624}, {"n": "Cheese", "r": "gray", "w": 2, "h": 2, "v": 366}, {"n": "Clearblue Shell", "r": "gray", "w": 2, "h": 2, "v": 356}, {"n": "Cockroach! Cockroach!", "r": "gray", "w": 2, "h": 2, "v": 278}, {"n": "Apex", "r": "gray", "w": 2, "h": 2, "v": 277}, {"n": "Antique Suitcase", "r": "red", "w": 3, "h": 2, "v": 577777}, {"n": "Unknown Access Card", "r": "red", "w": 3, "h": 2, "v": 366112}, {"n": "Portable Folding Screen", "r": "red", "w": 3, "h": 2, "v": 239342}, {"n": "Digital Camera", "r": "purple", "w": 3, "h": 2, "v": 18363}, {"n": "Starseeker Telescope", "r": "purple", "w": 3, "h": 2, "v": 18317}, {"n": "Portrait with Flowers", "r": "purple", "w": 3, "h": 2, "v": 18075}, {"n": "Ares Exercise Bike", "r": "purple", "w": 3, "h": 2, "v": 17847}, {"n": "Cup of Sunrise", "r": "purple", "w": 3, "h": 2, "v": 10743}, {"n": "Navigator's Telescope", "r": "blue", "w": 3, "h": 2, "v": 4840}, {"n": "Slender Lotus Vase", "r": "red", "w": 1, "h": 3, "v": 101860}, {"n": "Scepter Called Prestige", "r": "orange", "w": 1, "h": 3, "v": 77777}, {"n": "Kaleidoscope", "r": "orange", "w": 1, "h": 3, "v": 21012}, {"n": "Cubox Technologies Stylus", "r": "orange", "w": 1, "h": 3, "v": 12116}, {"n": "Azure Hairpin", "r": "purple", "w": 1, "h": 3, "v": 8065}, {"n": "Song of the Gladiator", "r": "purple", "w": 1, "h": 3, "v": 8019}, {"n": "Wandering Bannerfish", "r": "purple", "w": 1, "h": 3, "v": 7225}, {"n": "Halfwing Squadron", "r": "purple", "w": 1, "h": 3, "v": 6005}, {"n": "Beacon Ray", "r": "blue", "w": 1, "h": 3, "v": 4034}, {"n": "Smoky Amethyst", "r": "blue", "w": 1, "h": 3, "v": 3987}, {"n": "Broken Blade", "r": "blue", "w": 1, "h": 3, "v": 3665}, {"n": "Acqua Frizzante al Limone", "r": "blue", "w": 1, "h": 3, "v": 2224}, {"n": "Bed Sheet", "r": "gray", "w": 1, "h": 3, "v": 239}, {"n": "Frost Iron Symphony", "r": "red", "w": 2, "h": 3, "v": 80608}, {"n": "A Moment's Pause", "r": "orange", "w": 2, "h": 3, "v": 88888}, {"n": "Camera", "r": "orange", "w": 2, "h": 3, "v": 76591}, {"n": "Sea Salt Deep in the Heart", "r": "orange", "w": 2, "h": 3, "v": 30211}, {"n": "Kokoro Rider L1 - Ultimate Skill", "r": "orange", "w": 2, "h": 3, "v": 22847}, {"n": "Kokoro Rider L2 - Nimbus Flash", "r": "orange", "w": 2, "h": 3, "v": 22770}, {"n": "Whisperseed", "r": "orange", "w": 2, "h": 3, "v": 22336}, {"n": "Kokoro Rider L3 - Spartan Spirit", "r": "orange", "w": 2, "h": 3, "v": 22297}, {"n": "Snowfall Snow Globe", "r": "purple", "w": 2, "h": 3, "v": 15257}, {"n": "Caged Nest", "r": "purple", "w": 2, "h": 3, "v": 14934}, {"n": "Cubox Technologies Tablet", "r": "purple", "w": 2, "h": 3, "v": 11038}, {"n": "Wake-up Wham", "r": "blue", "w": 2, "h": 3, "v": 4843}, {"n": "Soul Snatcher", "r": "blue", "w": 2, "h": 3, "v": 3598}, {"n": "Faded Riddle", "r": "blue", "w": 2, "h": 3, "v": 3351}, {"n": "Dark Green Vase", "r": "green", "w": 2, "h": 3, "v": 2993}, {"n": "Cubox Portable Player", "r": "gray", "w": 2, "h": 3, "v": 611}, {"n": "Luminous Goblet", "r": "red", "w": 3, "h": 3, "v": 16800000}, {"n": "Ghostfire Wisp", "r": "red", "w": 3, "h": 3, "v": 260423}, {"n": "Nine-Bite Snack Box", "r": "red", "w": 3, "h": 3, "v": 240208}, {"n": "Thud-Thud Hammer", "r": "red", "w": 3, "h": 3, "v": 100000}, {"n": "Asahi Inori Figurine", "r": "orange", "w": 3, "h": 3, "v": 30264}, {"n": "Wheelchair Model", "r": "orange", "w": 3, "h": 3, "v": 27159}, {"n": "Artwork: Deep Forest", "r": "blue", "w": 3, "h": 3, "v": 6069}, {"n": "Lost Armor", "r": "blue", "w": 3, "h": 3, "v": 3626}, {"n": "New flavor out now!", "r": "green", "w": 3, "h": 3, "v": 2745}, {"n": "Canned Imaginadough", "r": "orange", "w": 4, "h": 3, "v": 124816}, {"n": "Coco Stripe", "r": "orange", "w": 4, "h": 3, "v": 101537}, {"n": "Ares Treadmill", "r": "purple", "w": 4, "h": 3, "v": 24180}, {"n": "LCD TV", "r": "blue", "w": 4, "h": 3, "v": 8135}, {"n": "White Dragon King", "r": "red", "w": 1, "h": 4, "v": 300000}, {"n": "Blue and White Porcelain Vase", "r": "orange", "w": 1, "h": 4, "v": 62456}, {"n": "Spring Sheath", "r": "orange", "w": 1, "h": 4, "v": 15309}, {"n": "Lustrous Jade", "r": "red", "w": 2, "h": 4, "v": 81088}, {"n": "Game Console", "r": "red", "w": 3, "h": 4, "v": 119211}, {"n": "Golden Koi Statue", "r": "red", "w": 4, "h": 4, "v": 22668888}, {"n": "K01 Model", "r": "red", "w": 4, "h": 4, "v": 59440}, {"n": "Whalesong", "r": "red", "w": 4, "h": 4, "v": 52000}, {"n": "Crimson Call", "r": "orange", "w": 4, "h": 4, "v": 101554}, {"n": "M1000 Model", "r": "green", "w": 4, "h": 4, "v": 4081}, {"n": "Your Fitness Buddy!", "r": "orange", "w": 1, "h": 5, "v": 27246}, {"n": "Cloudcutter", "r": "orange", "w": 1, "h": 5, "v": 18288}, {"n": "Antique Pendulum Clock", "r": "red", "w": 2, "h": 5, "v": 150933}, {"n": "Creamy Berry Baguette", "r": "orange", "w": 2, "h": 5, "v": 30452}, {"n": "Giovanni's Gilded Statue", "r": "orange", "w": 4, "h": 5, "v": 271827}, {"n": "Flatbread", "r": "orange", "w": 4, "h": 5, "v": 202798}, {"n": "Pendragon Model", "r": "red", "w": 5, "h": 5, "v": 20171210}, {"n": "Little Oink Bank", "r": "red", "w": 5, "h": 5, "v": 500001}, {"n": "Orrery", "r": "orange", "w": 5, "h": 5, "v": 51077}, {"n": "Definitely-Fished-This-Myself Fish", "r": "blue", "w": 5, "h": 5, "v": 9952}];
-  const SAMPLE = {
-    sample: true,
-    lots: [
-      { name: "(ตัวอย่าง) ของม่วงที่ยังไม่เห็น (ช่อง)", qty: 28, lo: 1988, hi: 5096 }
-    ],
-    gameEst: "30452",
-    hintMin: "", hintMax: "", unknownAdd: "",
-    basis: "game", round: 1,
-    opp: ["", "", ""], myBid: "", winBid: "300000", realVal: "296739", sellVal: "145806", estAtBid: "", winRound: "1", who: "me",
-    cat: BUILTIN.map((c) => ({ ...c })), builtinVer: BUILTIN_VER,
-    hist: [{ d: "2026-10-15", r: 1, who: "me", price: 300000, actual: 296739, est: null, sell: 145806 }]
+  const RAR = [["gray", "เทา"], ["green", "เขียว"], ["blue", "ฟ้า"], ["purple", "ม่วง"], ["orange", "ส้ม"], ["red", "แดง"]];
+  const RK = RAR.map((x) => x[0]);
+  const rname = (r) => r === "unk" ? "ไม่รู้สี" : (RAR.find((x) => x[0] === r) || ["", r])[1];
+  const CLUE = {
+    slots: { t: "Slot Device · ช่องรวม", needR: true, lab: "จำนวนช่อง", d: (c) => `ของ${rname(c.r)}ใช้ทั้งหมด ${fmt(c.n)} ช่อง` },
+    count: { t: "Count Device · จำนวนชิ้น", needR: true, lab: "จำนวนชิ้น", d: (c) => `ของ${rname(c.r)}มีทั้งหมด ${fmt(c.n)} ชิ้น` },
+    value: { t: "Valuation Device · มูลค่ารวม", needR: true, lab: "มูลค่า", d: (c) => `ของ${rname(c.r)}มูลค่ารวม ${fmt(c.n)}` },
+    avg: { t: "Average Value Device · มูลค่าเฉลี่ย", needR: true, lab: "มูลค่าเฉลี่ย", d: (c) => `ของ${rname(c.r)}มูลค่าเฉลี่ยชิ้นละ ${fmt(c.n)}` },
+    total: { t: "มูลค่ารวมทั้งตู้", needR: false, lab: "มูลค่า", d: (c) => `มูลค่ารวมของทั้งตู้ ${fmt(c.n)}` },
+    note: { t: "โน้ต", needR: false, lab: "ข้อความ", d: (c) => esc(c.text) }
   };
-  let S;
-  try { S = JSON.parse(localStorage.getItem(KEY)) || null; } catch (e) { S = null; }
-  if (!S || !Array.isArray(S.lots)) S = structuredClone(SAMPLE);
-  if (!Array.isArray(S.hist)) S.hist = [];
-  if (!Array.isArray(S.cat)) S.cat = [];
-  if (S.builtinVer !== BUILTIN_VER) {
-    S.cat = S.cat.filter((c) => !String(c.n || "").startsWith("(ตัวอย่าง)"));
-    const key = (c) => String(c.n).toLowerCase() + "|" + c.r;
-    const have = new Set(S.cat.map(key));
-    BUILTIN.forEach((c) => { if (!have.has(key(c))) S.cat.push({ ...c }); });
-    S.builtinVer = BUILTIN_VER;
-  }
+  const SAMPLE = () => ({
+    sample: true, rows: 10, tool: "unk", sel: null, round: 1, basis: "mid",
+    blocks: [{ id: 1, x: 5, y: 0, w: 2, h: 5, r: "unk", item: null }],
+    intel: [
+      { id: 1, round: 1, type: "slots", r: "purple", n: 28 },
+      { id: 2, round: 1, type: "note", text: "Rose Pact Express: เปิดเงาของที่หายากที่สุด 1 ชิ้น (เงา 2×5 ในตาราง)" }
+    ],
+    gameEst: "30452", opp: ["", "", ""], myBid: ""
+  });
 
   const $ = (id) => document.getElementById(id);
-  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
-
+  const esc = (t) => String(t ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   function parse(v) {
     if (v == null) return NaN;
     let s = String(v).trim().toLowerCase().replace(/[,\s_]/g, "");
     if (!s) return NaN;
     let m = 1;
-    if (s.endsWith("k")) { m = 1e3; s = s.slice(0, -1); }
-    else if (s.endsWith("m")) { m = 1e6; s = s.slice(0, -1); }
+    if (s.endsWith("k")) { m = 1e3; s = s.slice(0, -1); } else if (s.endsWith("m")) { m = 1e6; s = s.slice(0, -1); }
     const n = parseFloat(s);
     return isFinite(n) ? n * m : NaN;
   }
   const fmt = (n) => isFinite(n) ? Math.round(n).toLocaleString("en-US") : "–";
   const sfmt = (n) => !isFinite(n) ? "–" : (n > 0 ? "+" : n < 0 ? "−" : "") + Math.abs(Math.round(n)).toLocaleString("en-US");
+  const kfmt = (n) => !isFinite(n) ? "–" : n >= 1e6 ? (n / 1e6).toFixed(n >= 1e7 ? 0 : 1) + "M" : n >= 1e4 ? Math.round(n / 1e3) + "k" : n >= 1e3 ? (n / 1e3).toFixed(1) + "k" : String(Math.round(n));
   const cls = (n) => n > 0 ? "pos" : n < 0 ? "neg" : "";
+  const rng = (lo, hi) => lo === hi ? fmt(lo) : `${fmt(lo)} – ${fmt(hi)}`;
 
-  function untouched() { if (S.sample) { S.sample = false; $("sampleTag").hidden = true; } }
+  /* ---------- state ---------- */
+  let S = null;
+  try { S = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
+  if (!S || !Array.isArray(S.blocks)) S = SAMPLE();
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+  const touched = () => { if (S.sample) { S.sample = false; $("sampleTag").hidden = true; } };
+  const nextId = (arr) => arr.reduce((m, x) => Math.max(m, x.id || 0), 0) + 1;
 
-  /* ---------- lots ---------- */
-  function renderLots() {
-    const tb = $("lotBody");
-    tb.innerHTML = "";
-    S.lots.forEach((l, i) => {
-      const tr = document.createElement("tr");
-      tr.innerHTML =
-        `<td><input class="txt" id="ln${i}" aria-label="ชื่อชิ้น" value=""></td>` +
-        `<td class="n" style="min-width:64px"><input id="lq${i}" aria-label="จำนวน" inputmode="numeric"></td>` +
-        `<td class="n"><input id="ll${i}" aria-label="ต่ำสุดต่อชิ้น" inputmode="decimal"></td>` +
-        `<td class="n"><input id="lh${i}" aria-label="สูงสุดต่อชิ้น" inputmode="decimal"></td>` +
-        `<td><button type="button" class="x" aria-label="ลบชิ้นนี้">✕</button></td>`;
-      tb.appendChild(tr);
-      const [n, q, lo, hi] = tr.querySelectorAll("input");
-      n.value = l.name || ""; q.value = l.qty ?? 1; lo.value = l.lo ?? ""; hi.value = l.hi ?? "";
-      n.addEventListener("input", () => { l.name = n.value; untouched(); save(); });
-      q.addEventListener("input", () => { l.qty = q.value; untouched(); update(); });
-      lo.addEventListener("input", () => { l.lo = lo.value; untouched(); update(); });
-      hi.addEventListener("input", () => { l.hi = hi.value; untouched(); update(); });
-      tr.querySelector("button").addEventListener("click", () => { S.lots.splice(i, 1); untouched(); renderLots(); update(); });
-    });
+  /* ---------- catalog helpers ---------- */
+  const okItem = (c) => c.w > 0 && c.h > 0 && c.v > 0;
+  const fits = (c, w, h) => (c.w === w && c.h === h) || (c.w === h && c.h === w);
+  function cands(b) {
+    return BUILTIN.filter((c) => okItem(c) && (b.r === "unk" || c.r === b.r) && fits(c, b.w, b.h)).sort((a, z) => z.v - a.v);
+  }
+  function blockInfo(b) {
+    const it = b.item ? BUILTIN.find((c) => c.n === b.item.n && c.r === b.item.r) : null;
+    if (it) return { eff: it.r, lo: it.v, hi: it.v, mid: it.v, item: it, n: 1 };
+    const c = cands(b);
+    if (!c.length) return { eff: b.r, lo: 0, hi: 0, mid: 0, none: true, n: 0 };
+    const vs = c.map((x) => x.v);
+    return { eff: b.r, lo: Math.min(...vs), hi: Math.max(...vs), mid: vs.reduce((a, z) => a + z, 0) / vs.length, n: c.length };
   }
 
-  function totals() {
-    let lo = 0, hi = 0;
-    for (const l of S.lots) {
-      const q = parse(l.qty); const qty = isFinite(q) ? q : 1;
-      let a = parse(l.lo), b = parse(l.hi);
-      if (!isFinite(a) && !isFinite(b)) continue;
-      if (!isFinite(a)) a = b; if (!isFinite(b)) b = a;
-      if (a > b) [a, b] = [b, a];
-      lo += a * qty; hi += b * qty;
+  /* fill `area` slots of rarity r with catalog items (unlimited copies), optionally exactly `count` items */
+  function fill(r, area, count) {
+    if (area === 0 && (count == null || count === 0)) return { ok: true, lo: 0, hi: 0 };
+    if (area < 0 || (count != null && count < 0) || area > 400) return { ok: false };
+    const items = BUILTIN.filter((c) => okItem(c) && c.r === r).map((c) => ({ a: c.w * c.h, v: c.v }));
+    if (!items.length) return { ok: false };
+    if (count == null) {
+      const mn = new Array(area + 1).fill(Infinity), mx = new Array(area + 1).fill(-Infinity);
+      mn[0] = mx[0] = 0;
+      for (let s = 1; s <= area; s++) for (const it of items) if (it.a <= s) {
+        if (mn[s - it.a] + it.v < mn[s]) mn[s] = mn[s - it.a] + it.v;
+        if (mx[s - it.a] + it.v > mx[s]) mx[s] = mx[s - it.a] + it.v;
+      }
+      return isFinite(mn[area]) ? { ok: true, lo: mn[area], hi: mx[area] } : { ok: false };
     }
-    const extra = parse(S.unknownAdd);
-    if (isFinite(extra)) { lo += extra; hi += extra; }
-    const hmin = parse(S.hintMin), hmax = parse(S.hintMax);
-    if (isFinite(hmin)) { lo = Math.max(lo, hmin); hi = Math.max(hi, hmin); }
-    if (isFinite(hmax)) { hi = Math.min(hi, hmax); lo = Math.min(lo, hmax); }
-    return { low: lo, mid: (lo + hi) / 2, high: hi };
+    if (count > 200) return { ok: false };
+    const W = count + 1, mn = new Float64Array((area + 1) * W).fill(Infinity), mx = new Float64Array((area + 1) * W).fill(-Infinity);
+    mn[0] = mx[0] = 0;
+    for (let s = 1; s <= area; s++) for (let k = 1; k <= count; k++) for (const it of items) if (it.a <= s) {
+      const p = (s - it.a) * W + k - 1, q = s * W + k;
+      if (mn[p] + it.v < mn[q]) mn[q] = mn[p] + it.v;
+      if (mx[p] + it.v > mx[q]) mx[q] = mx[p] + it.v;
+    }
+    const q = area * W + count;
+    return isFinite(mn[q]) ? { ok: true, lo: mn[q], hi: mx[q] } : { ok: false };
   }
 
-  /* ---------- rounds ---------- */
+  /* which item counts k can fill exactly `area` slots of rarity r */
+  function feasibleCounts(r, area) {
+    if (area === 0) return [0];
+    if (area < 0 || area > 300) return [];
+    const items = BUILTIN.filter((c) => okItem(c) && c.r === r).map((c) => c.w * c.h);
+    const W = area + 1, ok = new Uint8Array((area + 1) * W); ok[0] = 1;
+    for (let s = 1; s <= area; s++) for (let k = 1; k <= s; k++) for (const a of items) if (a <= s && ok[(s - a) * W + k - 1]) { ok[s * W + k] = 1; break; }
+    const out = []; for (let k = 1; k <= area; k++) if (ok[area * W + k]) out.push(k);
+    return out;
+  }
+
+  function latest(type, r) {
+    let best = null;
+    for (const c of S.intel) if (c.type === type && (r == null || c.r === r) && isFinite(c.n)) if (!best || c.round >= best.round) best = c;
+    return best ? best.n : null;
+  }
+
+  function estimate() {
+    const info = S.blocks.map((b) => ({ b, ...blockInfo(b) }));
+    const rows = [];
+    let lo = 0, hi = 0, mid = 0;
+    for (const r of [...RK].reverse()) {
+      const p = info.filter((x) => x.eff === r);
+      const Sr = latest("slots", r), Kr = latest("count", r), Vr = latest("value", r), Ar = latest("avg", r);
+      if (!p.length && Sr == null && Kr == null && Vr == null && Ar == null) continue;
+      const area = p.reduce((a, x) => a + x.b.w * x.b.h, 0);
+      const row = { r, n: p.length, area, lo: 0, hi: 0, mid: 0, clue: [], note: "", flag: "" };
+      if (Sr != null) row.clue.push(`${Sr} ช่อง`);
+      if (Kr != null) row.clue.push(`${Kr} ชิ้น`);
+      if (Vr != null) row.clue.push(`มูลค่า ${fmt(Vr)}`);
+      if (Ar != null) row.clue.push(`เฉลี่ย ${fmt(Ar)}`);
+      const plo = p.reduce((a, x) => a + x.lo, 0), phi = p.reduce((a, x) => a + x.hi, 0), pmid = p.reduce((a, x) => a + x.mid, 0);
+      if (p.some((x) => x.none)) row.flag = "มีเงาที่ไม่ตรงกับของในคลัง";
+      if (Vr != null) { row.lo = row.hi = row.mid = Vr; row.note = "ใช้มูลค่ารวมจาก Valuation Device"; }
+      else if (Ar != null && Kr != null) { row.lo = row.hi = row.mid = Ar * Kr; row.note = `เฉลี่ย ${fmt(Ar)} × ${Kr} ชิ้น`; }
+      else if (Ar != null && Sr != null) {
+        const ks = feasibleCounts(r, Sr - area).map((k) => k + p.length);
+        if (ks.length) {
+          row.lo = Ar * Math.min(...ks); row.hi = Ar * Math.max(...ks); row.mid = (row.lo + row.hi) / 2;
+          row.note = `เฉลี่ย ${fmt(Ar)} × ${ks[0] === ks[ks.length - 1] ? ks[0] : ks[0] + "–" + ks[ks.length - 1]} ชิ้น (จากจำนวนช่อง)`;
+        } else { row.lo = plo; row.hi = phi; row.mid = pmid; row.flag = "จำนวนช่องไม่ตรงกับของในคลัง"; }
+      }
+      else if (Sr != null) {
+        const rem = Sr - area, remK = Kr != null ? Kr - p.length : null;
+        const f = fill(r, rem, remK);
+        if (f.ok) {
+          row.lo = plo + f.lo; row.hi = phi + f.hi; row.mid = pmid + (f.lo + f.hi) / 2;
+          row.note = rem > 0 ? `ยังไม่เห็น ${rem} ช่อง${remK != null ? ` / ${remK} ชิ้น` : ""}` : "เห็นครบแล้ว";
+        } else {
+          row.lo = plo; row.hi = phi; row.mid = pmid;
+          row.flag = rem < 0 ? `วาดเงาเกินคำใบ้ ${-rem} ช่อง` : `จัดของ${rname(r)}ให้ได้ ${rem} ช่อง${remK != null ? ` ${remK} ชิ้น` : ""}พอดีไม่ได้`;
+        }
+      } else {
+        row.lo = plo; row.hi = phi; row.mid = pmid;
+        row.note = Ar != null ? "รู้มูลค่าเฉลี่ยแล้ว ต้องรู้จำนวนชิ้นหรือจำนวนช่องด้วย" : "เฉพาะที่วาดไว้ อาจมีมากกว่านี้";
+      }
+      rows.push(row); lo += row.lo; hi += row.hi; mid += row.mid;
+    }
+    const u = info.filter((x) => x.eff === "unk");
+    if (u.length) {
+      const row = { r: "unk", n: u.length, area: u.reduce((a, x) => a + x.b.w * x.b.h, 0), clue: [], note: "ยังไม่รู้ว่าเป็นชิ้นไหน", flag: u.some((x) => x.none) ? "มีเงาที่ไม่ตรงกับของในคลัง" : "",
+        lo: u.reduce((a, x) => a + x.lo, 0), hi: u.reduce((a, x) => a + x.hi, 0), mid: u.reduce((a, x) => a + x.mid, 0) };
+      rows.push(row); lo += row.lo; hi += row.hi; mid += row.mid;
+    }
+    const T = latest("total", null);
+    if (T != null) { lo = hi = mid = T; }
+    return { rows, lo, hi, mid, total: T, info };
+  }
+
+  /* ---------- rounds & intel ---------- */
   function renderRounds() {
-    const box = $("rounds");
-    box.innerHTML = "";
+    const box = $("rounds"); box.innerHTML = "";
     MULTS.forEach((m, i) => {
       const b = document.createElement("button");
-      b.type = "button";
-      b.setAttribute("aria-pressed", String(S.round === i + 1));
+      b.type = "button"; b.setAttribute("aria-pressed", String(S.round === i + 1));
       b.innerHTML = `รอบ ${i + 1}<small>${m ? "&gt;" + m + "×" : "สูงสุด"}</small>`;
-      b.addEventListener("click", () => { S.round = i + 1; renderRounds(); update(); });
+      b.addEventListener("click", () => { S.round = i + 1; $("cRound").value = String(S.round); renderRounds(); renderClues(); update(); });
+      box.appendChild(b);
+    });
+    $("roundTitle").textContent = `Auction Round ${S.round}`;
+    $("bidRound").textContent = `รอบ ${S.round}`;
+  }
+  function renderClues() {
+    const box = $("clueList"); box.innerHTML = "";
+    const list = [...S.intel].sort((a, z) => z.round - a.round || z.id - a.id);
+    if (!list.length) { box.innerHTML = `<div class="empty">ยังไม่มีคำใบ้ เพิ่มคำใบ้ที่เห็นตรงกลางจอเกมด้านล่าง</div>`; return; }
+    list.forEach((c) => {
+      const d = document.createElement("div");
+      d.className = "clue" + (c.round < S.round ? " old" : "");
+      d.innerHTML = `<span class="tag">R${c.round}</span><div class="body"><b>${CLUE[c.type].t}</b><p>${CLUE[c.type].d(c)}</p></div><button type="button" class="x" aria-label="ลบคำใบ้">✕</button>`;
+      d.querySelector("button").addEventListener("click", () => { S.intel = S.intel.filter((x) => x !== c); touched(); renderClues(); update(); });
+      box.appendChild(d);
+    });
+  }
+  function clueForm() {
+    const t = CLUE[$("cType").value];
+    $("cRWrap").hidden = !t.needR;
+    $("cNLabel").textContent = t.lab;
+    const n = $("cN");
+    n.className = $("cType").value === "note" ? "txt" : "";
+    n.setAttribute("inputmode", $("cType").value === "note" ? "text" : "decimal");
+    n.placeholder = $("cType").value === "note" ? "เช่น คู่แข่งใช้อุปกรณ์…" : "เช่น 28";
+  }
+  $("cR").innerHTML = RAR.map(([k, t]) => `<option value="${k}">${t}</option>`).join("");
+  $("cR").value = "purple";
+  $("cType").addEventListener("change", clueForm);
+  $("addClue").addEventListener("click", () => {
+    const type = $("cType").value, raw = $("cN").value.trim();
+    const c = { id: nextId(S.intel), round: parseInt($("cRound").value, 10), type };
+    if (type === "note") { if (!raw) return; c.text = raw; }
+    else { const n = parse(raw); if (!isFinite(n)) { $("cN").focus(); return; } c.n = n; }
+    if (CLUE[type].needR) c.r = $("cR").value;
+    S.intel.push(c); $("cN").value = ""; touched(); renderClues(); update();
+  });
+  $("cN").addEventListener("keydown", (e) => { if (e.key === "Enter") $("addClue").click(); });
+
+  /* ---------- board ---------- */
+  const TOOLS = [["unk", "?"], ...RAR.map(([k]) => [k, ""])];
+  function renderTools() {
+    const box = $("tools"); box.innerHTML = `<span class="hint" style="margin-right:4px">สีเงา:</span>`;
+    TOOLS.forEach(([k, t]) => {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = `rbtn rb-${k}`; b.textContent = t; b.title = rname(k);
+      b.setAttribute("aria-label", rname(k)); b.setAttribute("aria-pressed", String(S.tool === k));
+      b.addEventListener("click", () => { S.tool = k; renderTools(); save(); });
       box.appendChild(b);
     });
   }
+  const board = $("board");
+  function renderBoard(E) {
+    board.style.aspectRatio = `${COLS} / ${S.rows}`;
+    const cells = $("cells");
+    cells.style.gridTemplateColumns = `repeat(${COLS}, 1fr)`; cells.style.gridTemplateRows = `repeat(${S.rows}, 1fr)`;
+    if (cells.childElementCount !== COLS * S.rows) cells.innerHTML = "<div></div>".repeat(COLS * S.rows);
+    board.querySelectorAll(".blk").forEach((e) => e.remove());
+    E.info.forEach(({ b, eff, lo, hi, item, none, n }) => {
+      const d = document.createElement("div");
+      d.className = `blk b-${eff}${item ? "" : " unid"}${S.sel === b.id ? " sel" : ""}`;
+      Object.assign(d.style, { left: `calc(${b.x / COLS * 100}% + 2px)`, top: `calc(${b.y / S.rows * 100}% + 2px)`, width: `calc(${b.w / COLS * 100}% - 2px)`, height: `calc(${b.h / S.rows * 100}% - 2px)` });
+      const label = item ? item.n : (none ? "ไม่พบ" : n === 1 ? "1 แบบ" : `${n} แบบ`);
+      const val = item ? kfmt(item.v) : none ? "" : lo === hi ? kfmt(lo) : `${kfmt(lo)}–${kfmt(hi)}`;
+      d.innerHTML = (b.w * b.h > 1 || b.h > 1 ? `<span class="n">${esc(label)}</span>` : "") + `<span class="v">${val}</span>`;
+      d.title = `${item ? item.n : rname(b.r)} ${b.w}×${b.h}`;
+      d.addEventListener("pointerdown", (e) => e.stopPropagation());
+      d.addEventListener("click", () => { S.sel = S.sel === b.id ? null : b.id; update(); });
+      board.appendChild(d);
+    });
+    $("rowCount").textContent = `${S.rows} แถว`;
+  }
+  let drag = null;
+  const prev = document.createElement("div"); prev.className = "preview"; prev.hidden = true; board.appendChild(prev);
+  function cellAt(e) {
+    const r = board.getBoundingClientRect();
+    return { x: Math.max(0, Math.min(COLS - 1, Math.floor((e.clientX - r.left) / r.width * COLS))), y: Math.max(0, Math.min(S.rows - 1, Math.floor((e.clientY - r.top) / r.height * S.rows))) };
+  }
+  const norm = (d) => ({ x: Math.min(d.x0, d.x1), y: Math.min(d.y0, d.y1), w: Math.abs(d.x1 - d.x0) + 1, h: Math.abs(d.y1 - d.y0) + 1 });
+  const overlaps = (a, skip) => S.blocks.some((b) => b.id !== skip && a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h);
+  function showPrev() {
+    const q = norm(drag);
+    Object.assign(prev.style, { left: `${q.x / COLS * 100}%`, top: `${q.y / S.rows * 100}%`, width: `${q.w / COLS * 100}%`, height: `${q.h / S.rows * 100}%` });
+    prev.classList.toggle("bad", overlaps(q));
+    prev.hidden = false;
+  }
+  board.addEventListener("pointerdown", (e) => {
+    const c = cellAt(e);
+    drag = { x0: c.x, y0: c.y, x1: c.x, y1: c.y };
+    board.setPointerCapture(e.pointerId); showPrev();
+  });
+  board.addEventListener("pointermove", (e) => { if (!drag) return; const c = cellAt(e); drag.x1 = c.x; drag.y1 = c.y; showPrev(); });
+  const endDrag = (commit) => {
+    if (!drag) return;
+    const q = norm(drag); drag = null; prev.hidden = true;
+    if (!commit) return;
+    if (overlaps(q)) { S.sel = null; update(); return; }
+    const b = { id: nextId(S.blocks), ...q, r: S.tool, item: null };
+    S.blocks.push(b); S.sel = b.id; touched(); update();
+  };
+  board.addEventListener("pointerup", () => endDrag(true));
+  board.addEventListener("pointercancel", () => endDrag(false));
+  $("rowPlus").addEventListener("click", () => { if (S.rows < 30) { S.rows++; update(); } });
+  $("rowMinus").addEventListener("click", () => {
+    const need = S.blocks.reduce((m, b) => Math.max(m, b.y + b.h), 1);
+    if (S.rows > Math.max(need, 3)) { S.rows--; update(); }
+  });
 
-  function winBidFor(top, m) {
-    if (!isFinite(top) || top <= 0) return m ? 1 : 1;
-    return m ? Math.floor(top * m) + 1 : Math.floor(top) + 1;
+  function renderInspector() {
+    const box = $("inspector");
+    const b = S.blocks.find((x) => x.id === S.sel);
+    if (!b) {
+      box.innerHTML = `<p class="hint">เลือกสีด้านบน แล้วลากบนตารางให้ได้ขนาดเท่าเงาในเกม (กดช่องเดียว = 1×1) แตะเงาที่วาดไว้เพื่อดูว่าเป็นของอะไรได้บ้าง เลือกชิ้นที่ใช่ หรือลบ</p>`;
+      return;
+    }
+    const c = cands(b);
+    const rb = TOOLS.map(([k, t]) => `<button type="button" class="rbtn rb-${k}" data-r="${k}" aria-label="${rname(k)}" aria-pressed="${b.r === k}">${t}</button>`).join("");
+    box.innerHTML =
+      `<div class="ph"><b>เงา ${b.w}×${b.h} · ${rname(b.r)}</b><button type="button" class="ghost" id="delBlk">ลบเงานี้</button></div>` +
+      `<div class="tools">${rb}</div>` +
+      (c.length ? `<p class="hint">${c.length} แบบที่เป็นไปได้ · แตะเพื่อระบุว่าเป็นชิ้นนี้</p><div class="cands">${c.map((x, i) => `<button type="button" class="cand" data-i="${i}" aria-pressed="${!!(b.item && b.item.n === x.n && b.item.r === x.r)}"><span><span class="sw s-${x.r}"></span>${esc(x.n)}</span><span class="num">${fmt(x.v)}</span></button>`).join("")}</div>`
+        : `<p class="hint">ไม่มีของ${b.r === "unk" ? "" : rname(b.r)}ขนาด ${b.w}×${b.h} ในคลัง ตรวจสีหรือขนาดอีกครั้ง</p>`);
+    box.querySelectorAll("[data-r]").forEach((e) => e.addEventListener("click", () => { b.r = e.dataset.r; b.item = null; touched(); update(); }));
+    box.querySelectorAll(".cand").forEach((e) => e.addEventListener("click", () => {
+      const x = c[+e.dataset.i];
+      b.item = b.item && b.item.n === x.n && b.item.r === x.r ? null : { n: x.n, r: x.r };
+      touched(); update();
+    }));
+    $("delBlk").addEventListener("click", () => { S.blocks = S.blocks.filter((x) => x !== b); S.sel = null; touched(); update(); });
   }
 
-  function setVerdict(el, kind, pill, html) {
-    el.className = "verdict " + kind;
-    el.innerHTML = `<span class="pill">${pill}</span>${html}`;
+  function renderBreakdown(E) {
+    const tb = $("breakBody"); tb.innerHTML = "";
+    if (!E.rows.length) tb.innerHTML = `<tr><td colspan="6" class="hint">วาดเงาหรือเพิ่มคำใบ้เพื่อเริ่มประเมิน</td></tr>`;
+    E.rows.forEach((r) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td><span class="sw s-${r.r}"></span>${rname(r.r)}</td><td class="mono">${r.n} ชิ้น / ${r.area} ช่อง</td><td>${r.clue.join(", ") || "–"}</td>` +
+        `<td class="mono">${fmt(r.lo)}</td><td class="mono">${fmt(r.hi)}</td><td>${esc(r.note)}${r.flag ? ` <span class="flag">⚠ ${esc(r.flag)}</span>` : ""}</td>`;
+      tb.appendChild(tr);
+    });
+    if (E.rows.length) {
+      const tr = document.createElement("tr"); tr.className = "tot";
+      tr.innerHTML = `<td>รวม</td><td></td><td>${E.total != null ? "มูลค่าทั้งตู้ " + fmt(E.total) : ""}</td><td class="mono">${fmt(E.lo)}</td><td class="mono">${fmt(E.hi)}</td><td>กลาง ${fmt(E.mid)}</td>`;
+      tb.appendChild(tr);
+    }
+    const ge = parse(S.gameEst);
+    $("breakHint").textContent = isFinite(ge) ? `Current Estimate ของเกม ${fmt(ge)} (นับเฉพาะของที่เห็นแล้ว)` : "";
+    $("estRange").textContent = E.rows.length ? (E.lo === E.hi ? fmt(E.lo) : `${kfmt(E.lo)} – ${kfmt(E.hi)}`) : "–";
   }
 
-  function update() {
-    const T = totals();
-    $("tLow").textContent = fmt(T.low); $("tMid").textContent = fmt(T.mid); $("tHigh").textContent = fmt(T.high);
-    document.querySelectorAll("#totals .tot").forEach((d) => d.classList.toggle("sel", d.dataset.k === S.basis));
+  /* ---------- bid ---------- */
+  function setVerdict(el, kind, pill, html) { el.className = "verdict " + kind; el.innerHTML = `<span class="pill">${pill}</span>${html}`; }
+  const winBidFor = (top, m) => (!isFinite(top) || top <= 0) ? 1 : (m ? Math.floor(top * m) + 1 : Math.floor(top) + 1);
+  function renderBid(E) {
     document.querySelectorAll("#basis button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.v === S.basis)));
-    document.querySelectorAll("#who button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.v === S.who)));
-    const ge = S.basis === "game" ? (parse(S.gameEst) || 0) : 0;
-    const tLo = ge + T.low, tHi = ge + T.high, tMid = ge + T.mid;
-    const V = S.basis === "game" ? tMid : T[S.basis];
-    const haveV = V > 0;
-
+    const V = E[S.basis], haveV = E.rows.length > 0 && V > 0;
     const opps = S.opp.map(parse).filter((x) => isFinite(x) && x > 0);
     const top = opps.length ? Math.max(...opps) : NaN;
     const r = S.round, m = MULTS[r - 1];
-
-    /* main verdict */
     const vEl = $("verdict");
-    if (!haveV) {
-      setVerdict(vEl, "info", "รอข้อมูล", `<p>ใส่ราคาประเมินของล็อตในส่วนที่ 1 ก่อน</p>`);
-    } else if (!isFinite(top)) {
-      const cap = m ? V / m : V;
-      setVerdict(vEl, "info", "ยังไม่มีบิดคู่แข่ง",
-        `<p>มูลค่าที่ใช้ <span class="num">${fmt(V)}</span> · บิดได้สูงสุดโดยไม่ขาดทุน <span class="num">${fmt(V)}</span></p>` +
-        (m ? `<p>ถ้าคู่แข่งสูงสุดบิดไม่ถึง <span class="num">${fmt(cap)}</span> การบิด <span class="num">${fmt(V)}</span> จะชนะทันทีในรอบ ${r}</p>` : ""));
-    } else {
-      const need = winBidFor(top, m);
-      const profit = V - need;
-      const pLo = tLo - need, pHi = tHi - need;
-      const bonusIfTheyWin = Math.max(0, top - V) * 0.1;
-      let kind, pill;
-      if (pLo >= 0) { kind = "good"; pill = "คุ้ม ทุกกรณี"; }
-      else if (profit >= 0) { kind = "warn"; pill = "คุ้มถ้าประเมินถูก"; }
-      else if (pHi >= 0) { kind = "warn"; pill = "เสี่ยง"; }
-      else { kind = "bad"; pill = "ไม่คุ้ม"; }
-      const label = m ? `บิดเพื่อชนะทันทีรอบ ${r}` : "บิดเพื่อชนะรอบ 5 (สูงกว่าคู่แข่ง)";
-      let html =
-        `<p>${label}</p><div class="big">${fmt(need)}</div>` +
-        `<p>คู่แข่งสูงสุด <span class="num">${fmt(top)}</span>${m ? ` × ${m}` : ""} · กำไรที่มูลค่า${{ game: "กลาง (Estimate + ที่ยังไม่เห็น)", low: "ต่ำสุด", mid: "กลาง", high: "สูงสุด" }[S.basis]}: <span class="num ${cls(profit)}">${sfmt(profit)}</span> (ช่วง <span class="num ${cls(pLo)}">${sfmt(pLo)}</span> ถึง <span class="num ${cls(pHi)}">${sfmt(pHi)}</span>)</p>`;
-      if (profit < 0) html += `<p>บิดได้คุ้มสุดที่ <span class="num">${fmt(V)}</span> ซึ่ง${m ? `ต้องให้คู่แข่งสูงสุดต่ำกว่า <span class="num">${fmt(V / m)}</span>` : "ต่ำกว่าคู่แข่งแล้ว"}</p>`;
-      if (bonusIfTheyWin > 0) html += `<p>ถ้าปล่อยให้คู่แข่งชนะที่ <span class="num">${fmt(top)}</span> เขาขาดทุน และคุณได้โบนัส 10% ≈ <span class="num pos">+${fmt(bonusIfTheyWin)}</span></p>`;
+    if (!haveV) setVerdict(vEl, "", "รอข้อมูล", `<p>วาดเงาหรือเพิ่มคำใบ้ก่อน เพื่อให้มีมูลค่าประเมิน</p>`);
+    else if (!isFinite(top)) setVerdict(vEl, "", "ยังไม่มีบิดคู่แข่ง",
+      `<p>มูลค่าที่ใช้ <span class="num">${fmt(V)}</span> (ช่วง ${rng(E.lo, E.hi)})</p>` + (m ? `<p>ถ้าคู่แข่งสูงสุดบิดไม่ถึง <span class="num">${fmt(V / m)}</span> การบิด <span class="num">${fmt(V)}</span> ชนะทันทีในรอบ ${r}</p>` : ""));
+    else {
+      const need = winBidFor(top, m), profit = V - need, pLo = E.lo - need, pHi = E.hi - need;
+      const kind = pLo >= 0 ? "good" : profit >= 0 ? "warn" : pHi >= 0 ? "warn" : "bad";
+      const pill = pLo >= 0 ? "คุ้มทุกกรณี" : profit >= 0 ? "คุ้มถ้าประเมินถูก" : pHi >= 0 ? "เสี่ยง" : "ไม่คุ้ม";
+      let html = `<p>${m ? `บิดเพื่อชนะทันทีรอบ ${r}` : "บิดเพื่อชนะรอบ 5"}</p><div class="big">${fmt(need)}</div>` +
+        `<p>คู่แข่งสูงสุด <span class="num">${fmt(top)}</span>${m ? ` × ${m}` : ""} · กำไร <span class="num ${cls(profit)}">${sfmt(profit)}</span> (ช่วง <span class="num ${cls(pLo)}">${sfmt(pLo)}</span> ถึง <span class="num ${cls(pHi)}">${sfmt(pHi)}</span>)</p>`;
+      if (profit < 0) html += `<p>บิดได้คุ้มสุดที่ <span class="num">${fmt(V)}</span>${m ? ` ต้องให้คู่แข่งสูงสุดต่ำกว่า <span class="num">${fmt(V / m)}</span>` : ""}</p>`;
+      if (top > V) html += `<p>ถ้าปล่อยให้คู่แข่งชนะที่ <span class="num">${fmt(top)}</span> คุณได้โบนัส 10% ≈ <span class="num pos">+${fmt((top - V) * 0.1)}</span></p>`;
       setVerdict(vEl, kind, pill, html);
     }
-    if (S.basis === "game" && haveV) vEl.insertAdjacentHTML("beforeend", `<p class="hint">มูลค่าที่ใช้ = Estimate จากเกม <span class="num">${fmt(ge)}</span> + ของที่ยังไม่เห็น <span class="num">${fmt(T.low)}–${fmt(T.high)}</span> → <span class="num">${fmt(tLo)}–${fmt(tHi)}</span></p>`);
-
-    /* my bid check */
-    const cEl = $("myCheck");
-    const mine = parse(S.myBid);
-    if (!isFinite(mine) || mine <= 0) {
-      setVerdict(cEl, "info", "บิดของคุณ", `<p>ใส่บิดของคุณเพื่อเช็กว่าชนะทันทีไหมและกำไรเท่าไร</p>`);
-    } else {
-      const all = [mine, ...opps].sort((a, b) => b - a);
-      const second = all.length > 1 ? all[1] : 0;
-      const gain = haveV ? V - mine : NaN;
-      const gainTxt = haveV ? ` · ถ้าได้ของ กำไร <span class="num ${cls(gain)}">${sfmt(gain)}</span>` : "";
+    const cEl = $("myCheck"), mine = parse(S.myBid);
+    if (!isFinite(mine) || mine <= 0) setVerdict(cEl, "", "บิดของคุณ", `<p>ใส่บิดของคุณเพื่อเช็กว่าชนะทันทีไหม</p>`);
+    else {
+      const all = [mine, ...opps].sort((a, z) => z - a), second = all.length > 1 ? all[1] : 0;
+      const gain = haveV ? V - mine : NaN, gainTxt = haveV ? ` · กำไร <span class="num ${cls(gain)}">${sfmt(gain)}</span>` : "";
       if (opps.length && mine < top) {
-        const oppSecond = [mine, ...opps].sort((a, b) => b - a)[1];
-        const theyWin = m ? top > oppSecond * m : true;
-        setVerdict(cEl, theyWin ? "bad" : "warn", theyWin ? "คู่แข่งชนะทันที" : "ยังไม่ชนะ",
-          `<p>บิด <span class="num">${fmt(mine)}</span> ต่ำกว่าคู่แข่งสูงสุด <span class="num">${fmt(top)}</span>${theyWin && m ? ` และเขาสูงกว่าอันดับ 2 เกิน ${m}× จึงชนะทันที` : ""}</p>`);
-      } else if (opps.length && mine === top) {
-        setVerdict(cEl, "warn", "เสมอ", `<p>บิดเท่าคู่แข่งสูงสุด${r === 5 ? " รอบ 5 เสมอจะไปรอบ 6 ต้องบิดไม่น้อยกว่า " + `<span class="num">${fmt(mine)}</span>` : " ไม่ชนะทันที"}${gainTxt}</p>`);
-      } else if (!m) {
-        setVerdict(cEl, haveV && gain < 0 ? "bad" : "good", "ชนะรอบ 5", `<p>คุณบิดสูงสุด<span class="num"> ${fmt(mine)}</span>${gainTxt}</p>`);
-      } else if (mine > second * m) {
-        setVerdict(cEl, haveV && gain < 0 ? "bad" : "good", "ชนะทันที",
-          `<p><span class="num">${fmt(mine)}</span> &gt; ${fmt(second)} × ${m} = <span class="num">${fmt(second * m)}</span>${gainTxt}</p>`);
-      } else {
-        setVerdict(cEl, "warn", "นำ แต่ไม่ชนะทันที",
-          `<p>ต้องบิดมากกว่า <span class="num">${fmt(second * m)}</span> (ขาดอีก <span class="num">${fmt(Math.floor(second * m) + 1 - mine)}</span>)${gainTxt}</p>`);
-      }
+        const theyWin = m ? top > all[1] * m : true;
+        setVerdict(cEl, theyWin ? "bad" : "warn", theyWin ? "คู่แข่งชนะทันที" : "ยังไม่ชนะ", `<p>ต่ำกว่าคู่แข่งสูงสุด <span class="num">${fmt(top)}</span></p>`);
+      } else if (opps.length && mine === top) setVerdict(cEl, "warn", "เสมอ", `<p>${r === 5 ? `รอบ 6 ต้องบิดไม่น้อยกว่า <span class="num">${fmt(mine)}</span>` : "ไม่ชนะทันที"}${gainTxt}</p>`);
+      else if (!m) setVerdict(cEl, haveV && gain < 0 ? "bad" : "good", "ชนะรอบ 5", `<p>คุณบิดสูงสุด${gainTxt}</p>`);
+      else if (mine > second * m) setVerdict(cEl, haveV && gain < 0 ? "bad" : "good", "ชนะทันที", `<p><span class="num">${fmt(mine)}</span> &gt; ${fmt(second)} × ${m}${gainTxt}</p>`);
+      else setVerdict(cEl, "warn", "นำ แต่ไม่ชนะทันที", `<p>ต้องมากกว่า <span class="num">${fmt(second * m)}</span> (ขาด <span class="num">${fmt(Math.floor(second * m) + 1 - mine)}</span>)${gainTxt}</p>`);
     }
-
-    /* ladder */
-    const lb = $("ladderBody");
-    lb.innerHTML = "";
+    const lb = $("ladderBody"); lb.innerHTML = "";
     MULTS.forEach((mm, i) => {
       const need = isFinite(top) ? winBidFor(top, mm) : NaN;
-      const tr = document.createElement("tr");
-      if (i + 1 === r) tr.className = "cur";
-      const pr = (x) => isFinite(need) && x > 0 ? `<span class="${cls(x - need)}">${sfmt(x - need)}</span>` : "–";
-      tr.innerHTML =
-        `<td>รอบ ${i + 1}</td><td class="mono">${mm ? "&gt; " + mm + "× อันดับ 2" : "สูงสุดชนะ"}</td>` +
-        `<td class="mono">${fmt(need)}</td>` +
-        `<td class="mono">${pr(tLo)} / ${pr(tMid)} / ${pr(tHi)}</td>` +
-        `<td class="mono">${haveV ? fmt(mm ? V / mm : V) : "–"}</td>`;
+      const pr = (x) => isFinite(need) && haveV ? `<span class="${cls(x - need)}">${sfmt(x - need)}</span>` : "–";
+      const tr = document.createElement("tr"); if (i + 1 === r) tr.className = "cur";
+      tr.innerHTML = `<td>รอบ ${i + 1} <span class="hint">${mm ? "&gt;" + mm + "×" : "สูงสุด"}</span></td><td class="mono">${fmt(need)}</td><td class="mono">${pr(E.lo)} / ${pr(E.mid)} / ${pr(E.hi)}</td><td class="mono">${haveV ? fmt(mm ? V / mm : V) : "–"}</td>`;
       lb.appendChild(tr);
     });
-
-    /* settlement */
-    const sEl = $("settleOut");
-    const wb = parse(S.winBid), rv = parse(S.realVal);
-    if (!isFinite(wb) || !isFinite(rv)) {
-      setVerdict(sEl, "info", "สรุปผล", `<p>ใส่ราคาที่ผู้ชนะจ่ายและมูลค่าจริงที่เปิดได้</p>`);
-    } else {
-      const pl = rv - wb;
-      if (S.who === "me") {
-        if (pl >= 0) setVerdict(sEl, "good", "กำไร", `<div class="big pos">${sfmt(pl)}</div><p>คู่แข่งไม่ได้โบนัส</p>`);
-        else setVerdict(sEl, "bad", "ขาดทุน", `<div class="big neg">${sfmt(pl)}</div><p>คู่แข่ง 3 คนได้โบนัสคนละ <span class="num">${fmt(-pl * 0.1)}</span> (รวม ${fmt(-pl * 0.3)})</p>`);
-        const sv = parse(S.sellVal);
-        if (isFinite(sv)) sEl.insertAdjacentHTML("beforeend", `<p>ถ้ากด Quick Sell ทั้งหมดได้ <span class="num">${fmt(sv)}</span> เทียบราคาที่จ่าย <span class="num ${cls(sv - wb)}">${sfmt(sv - wb)}</span> (${Math.round(sv / rv * 100)}% ของ Actual Value)</p>`);
-      } else {
-        if (pl >= 0) setVerdict(sEl, "info", "ผู้ชนะกำไร", `<p>ผู้ชนะได้ <span class="num">${sfmt(pl)}</span> คุณไม่ได้โบนัส</p>`);
-        else setVerdict(sEl, "good", "คุณได้โบนัส", `<div class="big pos">+${fmt(-pl * 0.1)}</div><p>ผู้ชนะขาดทุน <span class="num">${fmt(-pl)}</span> คุณได้ 10%</p>`);
-      }
-    }
-    renderHist();
-    save();
   }
 
-  function renderHist() {
-    const tb = $("histBody");
-    tb.innerHTML = "";
-    if (!S.hist.length) { tb.innerHTML = `<tr><td colspan="9" class="hint">ยังไม่มีประวัติ กรอกผลในส่วนที่ 3 แล้วกดบันทึก</td></tr>`; $("histSum").textContent = ""; return; }
-    let tot = 0; const rs = [];
-    S.hist.forEach((h, i) => {
-      const res = h.who === "me" ? h.actual - h.price : Math.max(0, h.price - h.actual) * 0.1;
-      tot += res;
-      const ratio = h.est > 0 ? h.actual / h.est : NaN;
-      if (isFinite(ratio)) rs.push(ratio);
-      const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${h.d}</td><td>${h.r}</td><td>${h.who === "me" ? "ฉัน" : "คนอื่น"}</td><td class="mono">${fmt(h.price)}</td><td class="mono">${fmt(h.actual)}</td><td class="mono">${h.est ? fmt(h.est) : "–"}</td><td class="mono">${isFinite(ratio) ? ratio.toFixed(2) + "×" : "–"}</td><td class="mono ${cls(res)}">${sfmt(res)}</td><td><button type="button" class="x" aria-label="ลบแถวนี้">✕</button></td>`;
-      tr.querySelector("button").addEventListener("click", () => { S.hist.splice(i, 1); update(); });
-      tb.appendChild(tr);
-    });
-    const avg = rs.length ? (rs.reduce((a, b) => a + b, 0) / rs.length).toFixed(2) + "×" : "–";
-    $("histSum").innerHTML = `${S.hist.length} ครั้ง · รวม <span class="num ${cls(tot)}">${sfmt(tot)}</span> · จริง ÷ Est. เฉลี่ย <span class="num">${avg}</span>`;
+  /* ---------- catalog (read-only) ---------- */
+  function renderCat() {
+    const r = $("catR").value, sz = $("catSize").value, q = $("catQ").value.trim().toLowerCase();
+    const list = BUILTIN.filter((c) => (!r || c.r === r) && (!sz || `${c.w}x${c.h}` === sz) && (!q || c.n.toLowerCase().includes(q)))
+      .sort((a, z) => RK.indexOf(z.r) - RK.indexOf(a.r) || z.v - a.v);
+    $("catBody").innerHTML = list.length ? list.map((c) => `<tr><td>${esc(c.n)}</td><td><span class="sw s-${c.r}"></span>${rname(c.r)}</td><td class="mono">${c.w}×${c.h}</td><td class="mono">${fmt(c.v)}</td><td class="mono">${fmt(c.v / (c.w * c.h))}</td></tr>`).join("")
+      : `<tr><td colspan="5" class="hint">ไม่พบของที่ตรงกับตัวกรอง</td></tr>`;
+    $("catCount").textContent = `${list.length} / ${BUILTIN.length} ชิ้น`;
   }
+  $("catR").innerHTML = `<option value="">ทุกสี</option>` + [...RAR].reverse().map(([k, t]) => `<option value="${k}">${t}</option>`).join("");
+  const sizes = [...new Set(BUILTIN.map((c) => `${c.w}x${c.h}`))].sort((a, z) => { const [aw, ah] = a.split("x").map(Number), [zw, zh] = z.split("x").map(Number); return ah - zh || aw - zw; });
+  $("catSize").innerHTML = `<option value="">ทุกขนาด</option>` + sizes.map((k) => `<option value="${k}">${k.replace("x", "×")}</option>`).join("");
+  ["catR", "catSize", "catQ"].forEach((id) => $(id).addEventListener("input", renderCat));
+  function showTab(cat) {
+    $("tabAuction").hidden = cat; $("tabCat").hidden = !cat;
+    $("tabBtnAuction").setAttribute("aria-selected", String(!cat)); $("tabBtnCat").setAttribute("aria-selected", String(cat));
+    try { sessionStorage.setItem("ggg-tab", cat ? "cat" : "auction"); } catch (e) {}
+  }
+  $("tabBtnAuction").addEventListener("click", () => showTab(false));
+  $("tabBtnCat").addEventListener("click", () => showTab(true));
 
   /* ---------- wiring ---------- */
-  function bindField(id, key, idx) {
+  function update() {
+    const E = estimate();
+    renderBoard(E); renderInspector(); renderBreakdown(E); renderBid(E);
+    save();
+  }
+  function bind(id, key, idx) {
     const el = $(id);
     el.value = idx == null ? (S[key] ?? "") : (S[key][idx] ?? "");
-    el.addEventListener("input", () => {
-      if (idx == null) S[key] = el.value; else S[key][idx] = el.value;
-      untouched(); update();
-    });
+    el.addEventListener("input", () => { if (idx == null) S[key] = el.value; else S[key][idx] = el.value; touched(); update(); });
   }
-  function init() {
-    $("sampleTag").hidden = !S.sample;
-    renderLots(); renderRounds();
-    ["gameEst", "hintMin", "hintMax", "unknownAdd", "myBid", "winBid", "realVal", "sellVal", "estAtBid", "winRound"].forEach((k) => bindField(k, k));
-    [0, 1, 2].forEach((i) => bindField("opp" + (i + 1), "opp", i));
-    update();
-  }
-  $("addLot").addEventListener("click", () => { S.lots.push({ name: "", qty: 1, lo: "", hi: "" }); untouched(); renderLots(); update(); $("ln" + (S.lots.length - 1)).focus(); });
-  $("clearLots").addEventListener("click", () => { S.lots = [{ name: "", qty: 1, lo: "", hi: "" }]; S.hintMin = S.hintMax = S.unknownAdd = ""; ["hintMin","hintMax","unknownAdd"].forEach((k) => $(k).value = ""); untouched(); renderLots(); update(); });
+  ["gameEst", "myBid"].forEach((k) => bind(k, k));
+  [0, 1, 2].forEach((i) => bind("opp" + (i + 1), "opp", i));
   document.querySelectorAll("#basis button").forEach((b) => b.addEventListener("click", () => { S.basis = b.dataset.v; update(); }));
-  document.querySelectorAll("#who button").forEach((b) => b.addEventListener("click", () => { S.who = b.dataset.v; update(); }));
-  $("saveRes").addEventListener("click", () => {
-    const price = parse(S.winBid), actual = parse(S.realVal);
-    if (!isFinite(price) || !isFinite(actual)) { $("saveMsg").textContent = "ใส่ราคาที่จ่ายและ Actual Value ก่อนบันทึก"; return; }
-    const est = parse(S.estAtBid), sell = parse(S.sellVal);
-    S.hist.unshift({ d: new Date().toISOString().slice(0, 10), r: parseInt(S.winRound || "5", 10), who: S.who, price, actual, est: isFinite(est) ? est : null, sell: isFinite(sell) ? sell : null });
-    $("saveMsg").textContent = "บันทึกแล้ว";
-    update();
+  let confirmNew = false;
+  $("newRoom").addEventListener("click", () => {
+    if (!confirmNew && (S.blocks.length || S.intel.length) && !S.sample) {
+      confirmNew = true; $("newRoom").textContent = "กดอีกครั้งเพื่อล้าง";
+      setTimeout(() => { confirmNew = false; $("newRoom").textContent = "เริ่มห้องใหม่"; }, 3000);
+      return;
+    }
+    confirmNew = false; $("newRoom").textContent = "เริ่มห้องใหม่";
+    Object.assign(S, { sample: false, blocks: [], intel: [], sel: null, round: 1, rows: 10, gameEst: "", opp: ["", "", ""], myBid: "" });
+    ["gameEst", "myBid", "opp1", "opp2", "opp3"].forEach((k) => $(k).value = "");
+    $("sampleTag").hidden = true; $("cRound").value = "1";
+    renderRounds(); renderClues(); update();
   });
-
-  /* ---------- catalog ---------- */
-  const RAR = [["gray", "เทา"], ["green", "เขียว"], ["blue", "ฟ้า"], ["purple", "ม่วง"], ["orange", "ส้ม"], ["red", "แดง"]];
-  const rname = (r) => (RAR.find((x) => x[0] === r) || ["", r])[1];
-  const ropts = (sel) => RAR.map(([k, t]) => `<option value="${k}"${k === sel ? " selected" : ""}>${t}</option>`).join("");
-  const esc = (t) => String(t ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-  function renderCat() {
-    const tb = $("catBody");
-    tb.innerHTML = "";
-    const f = $("catFilter").value;
-    S.cat.forEach((c, i) => {
-      if (f && c.r !== f) return;
-      const tr = document.createElement("tr");
-      tr.innerHTML =
-        `<td><input class="txt" id="cn${i}" aria-label="ชื่อ"></td>` +
-        `<td><select id="cr${i}" aria-label="ความหายาก">${ropts(c.r)}</select></td>` +
-        `<td class="n"><input id="cw${i}" aria-label="กว้าง" inputmode="numeric"></td>` +
-        `<td class="n"><input id="ch${i}" aria-label="สูง" inputmode="numeric"></td>` +
-        `<td class="n" style="min-width:100px"><input id="cv${i}" aria-label="ราคา" inputmode="decimal"></td>` +
-        `<td><button type="button" class="x" aria-label="ลบ">✕</button></td>`;
-      tb.appendChild(tr);
-      const [n, w, h, v] = tr.querySelectorAll("input"); const r = tr.querySelector("select");
-      n.value = c.n || ""; w.value = c.w ?? ""; h.value = c.h ?? ""; v.value = c.v ?? "";
-      n.addEventListener("input", () => { c.n = n.value; catChanged(); });
-      r.addEventListener("change", () => { c.r = r.value; catChanged(); });
-      w.addEventListener("input", () => { c.w = parse(w.value); catChanged(); });
-      h.addEventListener("input", () => { c.h = parse(h.value); catChanged(); });
-      v.addEventListener("input", () => { c.v = parse(v.value); catChanged(); });
-      tr.querySelector("button").addEventListener("click", () => { S.cat.splice(i, 1); renderCat(); catChanged(); });
-    });
-  }
-  function catChanged() { $("catJson").value = JSON.stringify(S.cat); $("catCount").textContent = S.cat.length + " ชิ้นในคลัง"; solveSil(); solveFill(); save(); }
-  const okItem = (c) => c.w > 0 && c.h > 0 && c.v > 0;
-
-  function addLot(name, lo, hi) {
-    S.lots.push({ name, qty: 1, lo: Math.round(lo), hi: Math.round(hi) });
-    untouched(); renderLots(); update();
-    document.getElementById("appraise").scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-
-  function solveSil() {
-    const el = $("silOut"), r = $("silR").value, w = parse($("silW").value), h = parse($("silH").value);
-    S.sil = { r, w: $("silW").value, h: $("silH").value };
-    if (!(w > 0 && h > 0)) { setVerdict(el, "info", "ใส่ขนาด", `<p>ใส่ขนาดเงาเป็นจำนวนช่อง เช่น นาฬิกาตั้งพื้น กว้าง 2 สูง 5</p>`); return; }
-    const m = S.cat.filter((c) => okItem(c) && c.r === r && ((c.w === w && c.h === h) || (c.w === h && c.h === w)));
-    if (!m.length) { setVerdict(el, "warn", "ไม่พบในคลัง", `<p>ยังไม่มีของ${rname(r)}ขนาด ${w}×${h} ในคลัง แตะเงาในเกมแล้วจดรายการที่เกมแสดงลงคลัง</p>`); return; }
-    const vs = m.map((c) => c.v), lo = Math.min(...vs), hi = Math.max(...vs), avg = vs.reduce((a, b) => a + b, 0) / vs.length;
-    setVerdict(el, "good", `${m.length} แบบที่เป็นไปได้`,
-      `<div class="big">${fmt(lo)}${hi > lo ? " – " + fmt(hi) : ""}</div><p>เฉลี่ย <span class="num">${fmt(avg)}</span></p>` +
-      `<div class="matches">${m.sort((a, b) => b.v - a.v).map((c) => `<div class="match"><span><span class="sw r-${c.r}"></span>${esc(c.n)}</span><span class="num">${fmt(c.v)}</span></div>`).join("")}</div>` +
-      `<div class="actions"><button type="button" id="silAdd">เพิ่มเข้าการประเมิน</button></div>`);
-    $("silAdd").addEventListener("click", () => addLot(`เงา${rname(r)} ${w}×${h}`, lo, hi));
-  }
-
-  function solveFill() {
-    const el = $("fillOut"), r = $("fillR").value, N = Math.round(parse($("fillN").value));
-    S.fill = { r, n: $("fillN").value };
-    if (!(N > 0)) { setVerdict(el, "info", "ใส่จำนวนช่อง", `<p>เช่น intel บอกว่า "ของม่วงใช้ 28 ช่อง" ให้เลือกม่วงแล้วใส่ 28 เครื่องคิดจะหาว่าของในคลังประกอบกันได้แบบไหนบ้าง</p>`); return; }
-    if (N > 400) { setVerdict(el, "warn", "มากเกินไป", `<p>รองรับไม่เกิน 400 ช่อง</p>`); return; }
-    const items = S.cat.filter((c) => okItem(c) && c.r === r).map((c) => ({ ...c, a: c.w * c.h }));
-    if (!items.length) { setVerdict(el, "warn", "ไม่มีของสีนี้ในคลัง", `<p>เพิ่มของ${rname(r)}ลงคลังก่อน</p>`); return; }
-    const mn = new Array(N + 1).fill(Infinity), mx = new Array(N + 1).fill(-Infinity), cnt = new Array(N + 1).fill(0);
-    const pmn = new Array(N + 1).fill(-1), pmx = new Array(N + 1).fill(-1);
-    mn[0] = 0; mx[0] = 0; cnt[0] = 1;
-    items.forEach((it, k) => { for (let s = it.a; s <= N; s++) cnt[s] += cnt[s - it.a]; });
-    for (let s = 1; s <= N; s++) items.forEach((it, k) => {
-      if (it.a > s) return;
-      if (mn[s - it.a] + it.v < mn[s]) { mn[s] = mn[s - it.a] + it.v; pmn[s] = k; }
-      if (mx[s - it.a] + it.v > mx[s]) { mx[s] = mx[s - it.a] + it.v; pmx[s] = k; }
-    });
-    if (!isFinite(mn[N])) { setVerdict(el, "warn", "ประกอบไม่ได้", `<p>ของ${rname(r)}ในคลังรวมกันให้ได้พอดี ${N} ช่องไม่ได้ ตรวจจำนวนช่องและสีอีกครั้ง หรือเกมอาจเพิ่มของใหม่ที่ยังไม่อยู่ในคลัง</p>`); return; }
-    const combo = (p) => { const c = {}; let s = N; while (s > 0) { const k = p[s]; c[k] = (c[k] || 0) + 1; s -= items[k].a; } return Object.entries(c).map(([k, q]) => `${esc(items[k].n)} ×${q}`).join(", "); };
-    setVerdict(el, "good", `${cnt[N] > 1e6 ? "มากกว่า 1 ล้าน" : fmt(cnt[N])} แบบ`,
-      `<div class="big">${fmt(mn[N])} – ${fmt(mx[N])}</div>` +
-      `<p>ถูกสุด: ${combo(pmn)}</p><p>แพงสุด: ${combo(pmx)}</p>` +
-      `<div class="actions"><button type="button" id="fillAdd">เพิ่มเข้าการประเมิน</button></div>`);
-    $("fillAdd").addEventListener("click", () => addLot(`ของ${rname(r)} ${N} ช่อง`, mn[N], mx[N]));
-  }
-  function initCat() {
-    S.sil = S.sil || { r: "red", w: "1", h: "1" }; S.fill = S.fill || { r: "purple", n: "28" };
-    $("silR").innerHTML = ropts(S.sil.r); $("fillR").innerHTML = ropts(S.fill.r);
-    $("silW").value = S.sil.w; $("silH").value = S.sil.h; $("fillN").value = S.fill.n;
-    $("catFilter").innerHTML = `<option value="">แสดงทุกสี</option>` + ropts("");
-    renderCat(); catChanged();
-  }
-  $("catFilter").addEventListener("change", renderCat);
-  ["silR", "silW", "silH"].forEach((id) => $(id).addEventListener("input", () => { solveSil(); save(); }));
-  ["fillR", "fillN"].forEach((id) => $(id).addEventListener("input", () => { solveFill(); save(); }));
-  $("addCat").addEventListener("click", () => { S.cat.push({ n: "", r: $("catFilter").value || $("silR").value || "purple", w: "", h: "", v: "" }); renderCat(); catChanged(); $("cn" + (S.cat.length - 1)).focus(); });
-  $("catCopy").addEventListener("click", () => {
-    const t = $("catJson");
-    navigator.clipboard.writeText(t.value).then(() => $("catMsg").textContent = "คัดลอกแล้ว", () => { t.select(); $("catMsg").textContent = "เลือกข้อความแล้ว กด Ctrl+C"; });
-  });
-  $("catImport").addEventListener("click", () => {
-    try {
-      const a = JSON.parse($("catJson").value);
-      if (!Array.isArray(a)) throw 0;
-      S.cat = a.filter((c) => c && typeof c === "object").map((c) => ({ n: String(c.n ?? ""), r: RAR.some((x) => x[0] === c.r) ? c.r : "gray", w: +c.w || "", h: +c.h || "", v: +c.v || "" }));
-      renderCat(); catChanged(); $("catMsg").textContent = `นำเข้า ${S.cat.length} ชิ้นแล้ว`;
-    } catch (e) { $("catMsg").textContent = "ข้อมูลไม่ใช่ JSON ของคลัง ตรวจแล้วลองใหม่"; }
-  });
-  $("resetAll").addEventListener("click", () => { S = structuredClone(SAMPLE); init(); initCat(); });
-  init();
-  initCat();
+  $("sampleTag").hidden = !S.sample;
+  $("cRound").value = String(S.round);
+  clueForm(); renderTools(); renderRounds(); renderClues(); renderCat();
+  try { if (location.hash === "#catalog" || sessionStorage.getItem("ggg-tab") === "cat") showTab(true); } catch (e) {}
+  update();
 })();
 </script>
+
 </body>
 </html>
