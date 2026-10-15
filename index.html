@@ -88,14 +88,20 @@ button.x { padding: 4px 9px; color: var(--muted); background: transparent; }
 .clue p { margin: 2px 0 0; font-size: 14px; color: #d6def3; overflow-wrap: anywhere; }
 .clue.old { opacity: .7; }
 .empty { border: 1px dashed var(--line); border-radius: 12px; padding: 14px; color: var(--muted); font-size: 14px; text-align: center; }
-.addclue { display: grid; gap: 8px; grid-template-columns: 64px minmax(0, 2.2fr) auto auto minmax(0, 1fr) auto; align-items: end; }
-@media (max-width: 640px) { .addclue { grid-template-columns: 1fr 1fr; } .addclue button { grid-column: 1 / -1; } }
+.addclue { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; }
+.addclue > div { flex: 1 1 110px; min-width: 0; }
+.addclue > div:first-child { flex: 0 0 70px; }
+.addclue > div:nth-child(2) { flex: 2 1 230px; }
+.addclue > button { flex: 1 0 auto; white-space: nowrap; }
 
 /* board */
 .tools { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
 .rbtn { width: 34px; height: 34px; border-radius: 50%; padding: 0; border: 2px solid transparent; display: grid; place-items: center; font-weight: 800; color: #fff; }
 .rbtn[aria-pressed="true"] { border-color: #fff; box-shadow: 0 0 0 2px var(--gold); }
 .rb-gray { background: var(--r-gray); } .rb-green { background: var(--r-green); } .rb-blue { background: var(--r-blue); } .rb-purple { background: var(--r-purple); } .rb-orange { background: var(--r-orange); } .rb-red { background: var(--r-red); } .rb-unk { background: var(--r-unk); }
+.rchip { border-radius: 999px; padding: 6px 12px 6px 8px; display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 13px; background: var(--panel2); }
+.rchip .dot { width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; color: #fff; font-weight: 800; }
+.rchip[aria-pressed="true"] { border-color: var(--gold); background: #3a2f17; }
 .rb-erase { background: var(--panel2); border-color: var(--bad) !important; color: var(--bad); width: auto; border-radius: 999px; padding: 0 12px; font-size: 13px; }
 .board.erasing { cursor: not-allowed; } .board.erasing .blk { cursor: pointer; } .board.erasing .blk:hover { outline: 2px solid var(--bad); }
 .boardwrap { overflow-x: auto; }
@@ -510,11 +516,11 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
   const snap = () => { undoStack.push(JSON.stringify(S.blocks)); if (undoStack.length > 50) undoStack.shift(); };
   function removeBlocks(ids) { if (!ids.length) return; snap(); S.blocks = S.blocks.filter((x) => !ids.includes(x.id)); if (ids.includes(S.sel)) S.sel = null; touched(); update(); }
   function renderTools() {
-    const box = $("tools"); box.innerHTML = `<span class="hint" style="margin-right:4px">สีเงา:</span>`;
+    const box = $("tools"); box.innerHTML = `<span class="hint" style="width:100%">1) เลือกสีของเงาที่เห็นในเกม (ไม่รู้สีเลือก ?) 2) ลากบนตารางให้ได้ขนาดเท่าเงา</span>`;
     TOOLS.forEach(([k, t]) => {
       const b = document.createElement("button");
-      b.type = "button"; b.className = `rbtn rb-${k}`; b.textContent = t; b.title = rname(k);
-      b.setAttribute("aria-label", rname(k)); b.setAttribute("aria-pressed", String(S.tool === k));
+      b.type = "button"; b.className = "rchip"; b.innerHTML = `<span class="dot rb-${k}">${t}</span>${rname(k)}`;
+      b.setAttribute("aria-pressed", String(S.tool === k));
       b.addEventListener("click", () => { S.tool = k; renderTools(); save(); });
       box.appendChild(b);
     });
@@ -607,7 +613,7 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
       return;
     }
     const c = cands(b);
-    const rb = TOOLS.map(([k, t]) => `<button type="button" class="rbtn rb-${k}" data-r="${k}" aria-label="${rname(k)}" aria-pressed="${b.r === k}">${t}</button>`).join("");
+    const rb = `<span class="hint" style="width:100%">สีของเงานี้ (แก้ได้)</span>` + TOOLS.map(([k, t]) => `<button type="button" class="rchip" data-r="${k}" aria-pressed="${b.r === k}"><span class="dot rb-${k}">${t}</span>${rname(k)}</button>`).join("");
     box.innerHTML =
       `<div class="ph"><b>เงา ${b.w}×${b.h} · ${rname(b.r)}</b><button type="button" class="ghost" id="delBlk">ลบเงานี้</button></div>` +
       `<div class="tools">${rb}</div>` +
