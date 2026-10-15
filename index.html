@@ -186,7 +186,6 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
           <option value="avg">Average Value Device · มูลค่าเฉลี่ยของสี</option>
           <option value="sizeavg">Two-Slot Average · มูลค่าเฉลี่ยตามขนาด</option>
           <option value="total">มูลค่ารวมทั้งตู้</option>
-          <option value="note">ข้อความอื่น / โน้ต</option>
         </select></div>
         <div id="cRWrap"><label for="cR">สี</label><select id="cR"></select></div>
         <div id="cAWrap" hidden><label for="cA">ขนาด (ช่อง)</label><input id="cA" inputmode="numeric" value="2"></div>
@@ -305,14 +304,12 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
     avg: { t: "Average Value Device · มูลค่าเฉลี่ย", needR: true, lab: "มูลค่าเฉลี่ย", d: (c) => `ของ${rname(c.r)}มูลค่าเฉลี่ยชิ้นละ ${fmt(c.n)}` },
     sizeavg: { t: "มูลค่าเฉลี่ยตามขนาด", needR: false, needA: true, lab: "มูลค่าเฉลี่ย", d: (c) => `ของขนาด ${c.a} ช่องมูลค่าเฉลี่ยชิ้นละ ${fmt(c.n)}` },
     total: { t: "มูลค่ารวมทั้งตู้", needR: false, lab: "มูลค่า", d: (c) => `มูลค่ารวมของทั้งตู้ ${fmt(c.n)}` },
-    note: { t: "โน้ต", needR: false, lab: "ข้อความ", d: (c) => esc(c.text) }
   };
   const SAMPLE = () => ({
     sample: true, rows: 10, tool: "unk", sel: null, round: 1, basis: "mid",
     blocks: [{ id: 1, x: 5, y: 0, w: 2, h: 5, r: "unk", item: null }],
     intel: [
-      { id: 1, round: 1, type: "slots", r: "purple", n: 28 },
-      { id: 2, round: 1, type: "note", text: "Rose Pact Express: เปิดเงาของที่หายากที่สุด 1 ชิ้น (เงา 2×5 ในตาราง)" }
+      { id: 1, round: 1, type: "slots", r: "purple", n: 28 }
     ],
     gameEst: "30452", opp: ["", "", ""], myBid: ""
   });
@@ -338,6 +335,7 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
   let S = null;
   try { S = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
   if (!S || !Array.isArray(S.blocks)) S = SAMPLE();
+  S.intel = (S.intel || []).filter((c) => c.type !== "note");
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
   const touched = () => { if (S.sample) { S.sample = false; $("sampleTag").hidden = true; } };
   const nextId = (arr) => arr.reduce((m, x) => Math.max(m, x.id || 0), 0) + 1;
