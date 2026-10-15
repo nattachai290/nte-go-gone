@@ -96,6 +96,8 @@ button.x { padding: 4px 9px; color: var(--muted); background: transparent; }
 .rbtn { width: 34px; height: 34px; border-radius: 50%; padding: 0; border: 2px solid transparent; display: grid; place-items: center; font-weight: 800; color: #fff; }
 .rbtn[aria-pressed="true"] { border-color: #fff; box-shadow: 0 0 0 2px var(--gold); }
 .rb-gray { background: var(--r-gray); } .rb-green { background: var(--r-green); } .rb-blue { background: var(--r-blue); } .rb-purple { background: var(--r-purple); } .rb-orange { background: var(--r-orange); } .rb-red { background: var(--r-red); } .rb-unk { background: var(--r-unk); }
+.rb-erase { background: var(--panel2); border-color: var(--bad) !important; color: var(--bad); width: auto; border-radius: 999px; padding: 0 12px; font-size: 13px; }
+.board.erasing { cursor: not-allowed; } .board.erasing .blk { cursor: pointer; } .board.erasing .blk:hover { outline: 2px solid var(--bad); }
 .boardwrap { overflow-x: auto; }
 .board { position: relative; width: 100%; min-width: 300px; background: var(--cell); border-radius: 10px; touch-action: none; user-select: none; -webkit-user-select: none; cursor: crosshair; }
 .cells { position: absolute; inset: 0; display: grid; gap: 2px; padding: 2px; }
@@ -107,7 +109,7 @@ button.x { padding: 4px 9px; color: var(--muted); background: transparent; }
 .blk.unid { background-image: repeating-linear-gradient(135deg, rgba(255,255,255,.07) 0 6px, transparent 6px 12px) !important; }
 .b-gray { background: linear-gradient(160deg, #858590, #4a4a52); } .b-green { background: linear-gradient(160deg, #22b598, #0f5e50); } .b-blue { background: linear-gradient(160deg, #3a8cf0, #1a438a); } .b-purple { background: linear-gradient(160deg, #a752d6, #561f78); } .b-orange { background: linear-gradient(160deg, #f0963c, #84431a); } .b-red { background: linear-gradient(160deg, #e2525a, #721c22); } .b-unk { background: linear-gradient(160deg, #6a6872, #3a3940); }
 .preview { position: absolute; border: 2px dashed var(--gold); border-radius: 6px; background: rgba(242,179,61,.15); pointer-events: none; }
-.preview.bad { border-color: var(--bad); background: rgba(255,138,128,.15); }
+.preview.bad, .preview.erase { border-color: var(--bad); background: rgba(255,138,128,.15); }
 .inspector { background: var(--panel2); border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
 .cands { display: grid; gap: 6px; max-height: 260px; overflow-y: auto; }
 .cand { display: flex; justify-content: space-between; gap: 10px; text-align: left; font-weight: 500; }
@@ -215,7 +217,7 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
     <section class="panel" id="lot">
       <div class="ph">
         <h2>ตู้ล็อต<small>ลากบนตารางเพื่อวาดเงาของ</small></h2>
-        <div class="actions"><button type="button" id="rowMinus" class="ghost" aria-label="ลดแถว">− แถว</button><span class="hint" id="rowCount"></span><button type="button" id="rowPlus" class="ghost" aria-label="เพิ่มแถว">+ แถว</button></div>
+        <div class="actions"><button type="button" id="undoBtn" class="ghost">↶ ย้อนกลับ</button><button type="button" id="clearBoard" class="ghost">ล้างตาราง</button><button type="button" id="rowMinus" class="ghost" aria-label="ลดแถว">− แถว</button><span class="hint" id="rowCount"></span><button type="button" id="rowPlus" class="ghost" aria-label="เพิ่มแถว">+ แถว</button></div>
       </div>
       <div class="tools" id="tools" role="group" aria-label="สีของเงาที่จะวาด"></div>
       <div class="boardwrap"><div class="board" id="board"><div class="cells" id="cells"></div></div></div>
@@ -506,6 +508,9 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
 
   /* ---------- board ---------- */
   const TOOLS = [["unk", "?"], ...RAR.map(([k]) => [k, ""])];
+  const undoStack = [];
+  const snap = () => { undoStack.push(JSON.stringify(S.blocks)); if (undoStack.length > 50) undoStack.shift(); };
+  function removeBlocks(ids) { if (!ids.length) return; snap(); S.blocks = S.blocks.filter((x) => !ids.includes(x.id)); if (ids.includes(S.sel)) S.sel = null; touched(); update(); }
   function renderTools() {
     const box = $("tools"); box.innerHTML = `<span class="hint" style="margin-right:4px">สีเงา:</span>`;
     TOOLS.forEach(([k, t]) => {
@@ -515,6 +520,12 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
       b.addEventListener("click", () => { S.tool = k; renderTools(); save(); });
       box.appendChild(b);
     });
+    const er = document.createElement("button");
+    er.type = "button"; er.className = "rbtn rb-erase"; er.textContent = "✕ ยางลบ"; er.setAttribute("aria-pressed", String(S.tool === "erase"));
+    er.title = "แตะหรือลากทับเงาเพื่อลบ";
+    er.addEventListener("click", () => { S.tool = S.tool === "erase" ? "unk" : "erase"; S.sel = null; renderTools(); update(); });
+    box.appendChild(er);
+    board.classList.toggle("erasing", S.tool === "erase");
   }
   const board = $("board");
   function renderBoard(E) {
@@ -532,7 +543,7 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
       d.innerHTML = (b.w * b.h > 1 || b.h > 1 ? `<span class="n">${esc(label)}</span>` : "") + `<span class="v">${val}</span>`;
       d.title = `${item ? item.n : rname(b.r)} ${b.w}×${b.h}`;
       d.addEventListener("pointerdown", (e) => e.stopPropagation());
-      d.addEventListener("click", () => { S.sel = S.sel === b.id ? null : b.id; update(); });
+      d.addEventListener("click", () => { if (S.tool === "erase") { removeBlocks([b.id]); return; } S.sel = S.sel === b.id ? null : b.id; update(); });
       board.appendChild(d);
     });
     $("rowCount").textContent = `${S.rows} แถว`;
@@ -548,7 +559,8 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
   function showPrev() {
     const q = norm(drag);
     Object.assign(prev.style, { left: `${q.x / COLS * 100}%`, top: `${q.y / S.rows * 100}%`, width: `${q.w / COLS * 100}%`, height: `${q.h / S.rows * 100}%` });
-    prev.classList.toggle("bad", overlaps(q));
+    prev.classList.toggle("erase", S.tool === "erase");
+    prev.classList.toggle("bad", S.tool !== "erase" && overlaps(q));
     prev.hidden = false;
   }
   board.addEventListener("pointerdown", (e) => {
@@ -561,12 +573,28 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
     if (!drag) return;
     const q = norm(drag); drag = null; prev.hidden = true;
     if (!commit) return;
+    if (S.tool === "erase") { removeBlocks(S.blocks.filter((b) => q.x < b.x + b.w && b.x < q.x + q.w && q.y < b.y + b.h && b.y < q.y + q.h).map((b) => b.id)); return; }
     if (overlaps(q)) { S.sel = null; update(); return; }
+    snap();
     const b = { id: nextId(S.blocks), ...q, r: S.tool, item: null };
     S.blocks.push(b); S.sel = b.id; touched(); update();
   };
   board.addEventListener("pointerup", () => endDrag(true));
   board.addEventListener("pointercancel", () => endDrag(false));
+  $("undoBtn").addEventListener("click", () => { const last = undoStack.pop(); if (last == null) return; S.blocks = JSON.parse(last); if (!S.blocks.some((x) => x.id === S.sel)) S.sel = null; update(); });
+  let confirmClear = false;
+  $("clearBoard").addEventListener("click", () => {
+    if (!S.blocks.length) return;
+    if (!confirmClear) { confirmClear = true; $("clearBoard").textContent = "กดอีกครั้งเพื่อล้าง"; setTimeout(() => { confirmClear = false; $("clearBoard").textContent = "ล้างตาราง"; }, 3000); return; }
+    confirmClear = false; $("clearBoard").textContent = "ล้างตาราง";
+    removeBlocks(S.blocks.map((x) => x.id));
+  });
+  document.addEventListener("keydown", (e) => {
+    const tag = (e.target.tagName || "").toLowerCase();
+    if (tag === "input" || tag === "textarea" || tag === "select") return;
+    if ((e.key === "Delete" || e.key === "Backspace") && S.sel != null) { e.preventDefault(); removeBlocks([S.sel]); }
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); $("undoBtn").click(); }
+  });
   $("rowPlus").addEventListener("click", () => { if (S.rows < 30) { S.rows++; update(); } });
   $("rowMinus").addEventListener("click", () => {
     const need = S.blocks.reduce((m, b) => Math.max(m, b.y + b.h), 1);
@@ -577,7 +605,7 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
     const box = $("inspector");
     const b = S.blocks.find((x) => x.id === S.sel);
     if (!b) {
-      box.innerHTML = `<p class="hint">เลือกสีด้านบน แล้วลากบนตารางให้ได้ขนาดเท่าเงาในเกม (กดช่องเดียว = 1×1) แตะเงาที่วาดไว้เพื่อดูว่าเป็นของอะไรได้บ้าง เลือกชิ้นที่ใช่ หรือลบ</p>`;
+      box.innerHTML = `<p class="hint">เลือกสีด้านบน แล้วลากบนตารางให้ได้ขนาดเท่าเงาในเกม (กดช่องเดียว = 1×1) แตะเงาที่วาดไว้เพื่อดูว่าเป็นของอะไรได้บ้าง ใส่ผิด: แตะเงาแล้วกด "ลบเงานี้" ใช้ยางลบ (แตะหรือลากทับ) กด "ย้อนกลับ" หรือกด Delete</p>`;
       return;
     }
     const c = cands(b);
@@ -588,14 +616,15 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
       `<label style="display:flex;gap:8px;align-items:center;font-size:14px;color:var(--ink);margin:0"><input type="checkbox" id="bigChk" style="width:auto"${b.big ? " checked" : ""}> ชิ้นที่ใช้ช่องมากที่สุด (Special Size / Special Evaluation)</label>` +
       (c.length ? `<p class="hint">${c.length} แบบที่เป็นไปได้ · แตะเพื่อระบุว่าเป็นชิ้นนี้</p><div class="cands">${c.map((x, i) => `<button type="button" class="cand" data-i="${i}" aria-pressed="${!!(b.item && b.item.n === x.n && b.item.r === x.r)}"><span><span class="sw s-${x.r}"></span>${esc(x.n)}</span><span class="num">${fmt(x.v)}</span></button>`).join("")}</div>`
         : `<p class="hint">ไม่มีของ${b.r === "unk" ? "" : rname(b.r)}ขนาด ${b.w}×${b.h} ในคลัง ตรวจสีหรือขนาดอีกครั้ง</p>`);
-    box.querySelectorAll("[data-r]").forEach((e) => e.addEventListener("click", () => { b.r = e.dataset.r; b.item = null; touched(); update(); }));
+    box.querySelectorAll("[data-r]").forEach((e) => e.addEventListener("click", () => { snap(); b.r = e.dataset.r; b.item = null; touched(); update(); }));
     box.querySelectorAll(".cand").forEach((e) => e.addEventListener("click", () => {
       const x = c[+e.dataset.i];
+      snap();
       b.item = b.item && b.item.n === x.n && b.item.r === x.r ? null : { n: x.n, r: x.r };
       touched(); update();
     }));
-    $("bigChk").addEventListener("change", (e) => { S.blocks.forEach((x) => { x.big = false; }); b.big = e.target.checked; touched(); update(); });
-    $("delBlk").addEventListener("click", () => { S.blocks = S.blocks.filter((x) => x !== b); S.sel = null; touched(); update(); });
+    $("bigChk").addEventListener("change", (e) => { snap(); S.blocks.forEach((x) => { x.big = false; }); b.big = e.target.checked; touched(); update(); });
+    $("delBlk").addEventListener("click", () => removeBlocks([b.id]));
   }
 
   function renderBreakdown(E) {
