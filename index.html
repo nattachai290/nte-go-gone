@@ -112,10 +112,11 @@ button.x { padding: 4px 9px; color: var(--muted); background: transparent; }
 .blk .n { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .blk .v { font: 700 11px var(--f-num); white-space: nowrap; }
 .blk.sel { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold); z-index: 2; }
-.blk.unid { background-image: repeating-linear-gradient(135deg, rgba(255,255,255,.07) 0 6px, transparent 6px 12px) !important; }
+.blk.unid::before { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(135deg, rgba(255,255,255,.10) 0 6px, transparent 6px 12px); pointer-events: none; }
+.blk > span { position: relative; }
 .b-gray { background: linear-gradient(160deg, #858590, #4a4a52); } .b-green { background: linear-gradient(160deg, #22b598, #0f5e50); } .b-blue { background: linear-gradient(160deg, #3a8cf0, #1a438a); } .b-purple { background: linear-gradient(160deg, #a752d6, #561f78); } .b-orange { background: linear-gradient(160deg, #f0963c, #84431a); } .b-red { background: linear-gradient(160deg, #e2525a, #721c22); } .b-unk { background: linear-gradient(160deg, #6a6872, #3a3940); }
-.preview { position: absolute; border: 2px dashed var(--gold); border-radius: 6px; background: rgba(242,179,61,.15); pointer-events: none; }
-.preview.bad, .preview.erase { border-color: var(--bad); background: rgba(255,138,128,.15); }
+.preview { position: absolute; border: 2px dashed #fff; border-radius: 6px; opacity: .75; pointer-events: none; }
+.preview.bad, .preview.erase { border-color: var(--bad); background: rgba(255,138,128,.15) !important; }
 .inspector { background: var(--panel2); border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
 .cands { display: grid; gap: 6px; max-height: 260px; overflow-y: auto; }
 .cand { display: flex; justify-content: space-between; gap: 10px; text-align: left; font-weight: 500; }
@@ -563,7 +564,7 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
   function showPrev() {
     const q = norm(drag);
     Object.assign(prev.style, { left: `${q.x / COLS * 100}%`, top: `${q.y / S.rows * 100}%`, width: `${q.w / COLS * 100}%`, height: `${q.h / S.rows * 100}%` });
-    prev.classList.toggle("erase", S.tool === "erase");
+    prev.className = "preview" + (S.tool === "erase" ? " erase" : ` b-${S.tool}`);
     prev.classList.toggle("bad", S.tool !== "erase" && overlaps(q));
     prev.hidden = false;
   }
