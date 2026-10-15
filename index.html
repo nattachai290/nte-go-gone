@@ -138,10 +138,13 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
         <h2>1 · ประเมินมูลค่า<small>รวมทุกล็อตในตู้</small></h2>
         <span class="sample" id="sampleTag">ข้อมูลตัวอย่าง</span>
       </div>
-      <p class="hint">ใส่ช่วงราคาที่ประเมินได้ของแต่ละชิ้นจาก intel ของผู้ช่วยและอุปกรณ์ ถ้ารู้ราคาแน่นอนให้ใส่ต่ำสุด = สูงสุด พิมพ์ 12k หรือ 1.5m ได้</p>
+      <p class="hint">ใส่ Current Estimate ที่เกมแสดงมุมขวาบน หรือประเมินเองเป็นแถว: ชิ้นของ หรือกลุ่มตามความหายาก (เช่น intel บอกว่าของม่วงใช้ 28 ช่อง ให้ใส่จำนวน 28 และราคาต่อช่อง) พิมพ์ 12k หรือ 1.5m ได้</p>
+      <div class="row">
+        <div><label for="gameEst">Current Estimate จากเกม</label><input id="gameEst" inputmode="decimal" placeholder="เช่น 30,452"></div>
+      </div>
       <div class="lots">
         <table>
-          <thead><tr><th>ชิ้น</th><th>จำนวน</th><th>ต่ำสุด / ชิ้น</th><th>สูงสุด / ชิ้น</th><th></th></tr></thead>
+          <thead><tr><th>ชิ้น</th><th>จำนวน / ช่อง</th><th>ต่ำสุด / หน่วย</th><th>สูงสุด / หน่วย</th><th></th></tr></thead>
           <tbody id="lotBody"></tbody>
         </table>
       </div>
@@ -162,6 +165,7 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
       <div>
         <label>ใช้มูลค่าไหนในการคำนวณบิด</label>
         <div class="seg" id="basis" role="group" aria-label="มูลค่าที่ใช้">
+          <button type="button" data-v="game">ค่าจากเกม</button>
           <button type="button" data-v="low">ต่ำสุด (ปลอดภัย)</button>
           <button type="button" data-v="mid">กลาง</button>
           <button type="button" data-v="high">สูงสุด (เสี่ยง)</button>
@@ -227,17 +231,17 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
 <script>
 (function () {
   const MULTS = [2, 1.6, 1.3, 1.1, null];
-  const KEY = "ggg-calc-v1";
+  const KEY = "ggg-calc-v2";
   const SAMPLE = {
     sample: true,
     lots: [
-      { name: "แจกันลายคราม", qty: 1, lo: 18000, hi: 26000 },
-      { name: "เหรียญทองโบราณ", qty: 3, lo: 2500, hi: 4000 },
-      { name: "กล่องปริศนา", qty: 1, lo: 5000, hi: 30000 }
+      { name: "ของม่วง (ช่อง)", qty: 28, lo: 700, hi: 1300 },
+      { name: "ของหายากสุด (เงา 1 ชิ้น)", qty: 1, lo: 5000, hi: 15000 }
     ],
+    gameEst: "30452",
     hintMin: "", hintMax: "", unknownAdd: "",
-    basis: "mid", round: 1,
-    opp: ["15000", "22000", "9000"], myBid: "", winBid: "", realVal: "", who: "me"
+    basis: "game", round: 1,
+    opp: ["", "", ""], myBid: "", winBid: "", realVal: "", who: "me"
   };
   let S;
   try { S = JSON.parse(localStorage.getItem(KEY)) || null; } catch (e) { S = null; }
@@ -333,8 +337,9 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
     document.querySelectorAll("#totals .tot").forEach((d) => d.classList.toggle("sel", d.dataset.k === S.basis));
     document.querySelectorAll("#basis button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.v === S.basis)));
     document.querySelectorAll("#who button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.v === S.who)));
-    const V = T[S.basis];
+    const V = S.basis === "game" ? parse(S.gameEst) : T[S.basis];
     const haveV = V > 0;
+    const tLo = T.high > 0 ? T.low : V, tHi = T.high > 0 ? T.high : V, tMid = T.high > 0 ? T.mid : V;
 
     const opps = S.opp.map(parse).filter((x) => isFinite(x) && x > 0);
     const top = opps.length ? Math.max(...opps) : NaN;
@@ -352,7 +357,7 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
     } else {
       const need = winBidFor(top, m);
       const profit = V - need;
-      const pLo = T.low - need, pHi = T.high - need;
+      const pLo = tLo - need, pHi = tHi - need;
       const bonusIfTheyWin = Math.max(0, top - V) * 0.1;
       let kind, pill;
       if (pLo >= 0) { kind = "good"; pill = "คุ้ม ทุกกรณี"; }
@@ -362,7 +367,7 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
       const label = m ? `บิดเพื่อชนะทันทีรอบ ${r}` : "บิดเพื่อชนะรอบ 5 (สูงกว่าคู่แข่ง)";
       let html =
         `<p>${label}</p><div class="big">${fmt(need)}</div>` +
-        `<p>คู่แข่งสูงสุด <span class="num">${fmt(top)}</span>${m ? ` × ${m}` : ""} · กำไรที่มูลค่า${{ low: "ต่ำสุด", mid: "กลาง", high: "สูงสุด" }[S.basis]}: <span class="num ${cls(profit)}">${sfmt(profit)}</span> (ช่วง <span class="num ${cls(pLo)}">${sfmt(pLo)}</span> ถึง <span class="num ${cls(pHi)}">${sfmt(pHi)}</span>)</p>`;
+        `<p>คู่แข่งสูงสุด <span class="num">${fmt(top)}</span>${m ? ` × ${m}` : ""} · กำไรที่มูลค่า${{ game: "จากเกม", low: "ต่ำสุด", mid: "กลาง", high: "สูงสุด" }[S.basis]}: <span class="num ${cls(profit)}">${sfmt(profit)}</span> (ช่วง <span class="num ${cls(pLo)}">${sfmt(pLo)}</span> ถึง <span class="num ${cls(pHi)}">${sfmt(pHi)}</span>)</p>`;
       if (profit < 0) html += `<p>บิดได้คุ้มสุดที่ <span class="num">${fmt(V)}</span> ซึ่ง${m ? `ต้องให้คู่แข่งสูงสุดต่ำกว่า <span class="num">${fmt(V / m)}</span>` : "ต่ำกว่าคู่แข่งแล้ว"}</p>`;
       if (bonusIfTheyWin > 0) html += `<p>ถ้าปล่อยให้คู่แข่งชนะที่ <span class="num">${fmt(top)}</span> เขาขาดทุน และคุณได้โบนัส 10% ≈ <span class="num pos">+${fmt(bonusIfTheyWin)}</span></p>`;
       setVerdict(vEl, kind, pill, html);
@@ -407,7 +412,7 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
       tr.innerHTML =
         `<td>รอบ ${i + 1}</td><td class="mono">${mm ? "&gt; " + mm + "× อันดับ 2" : "สูงสุดชนะ"}</td>` +
         `<td class="mono">${fmt(need)}</td>` +
-        `<td class="mono">${pr(T.low)} / ${pr(T.mid)} / ${pr(T.high)}</td>` +
+        `<td class="mono">${pr(tLo)} / ${pr(tMid)} / ${pr(tHi)}</td>` +
         `<td class="mono">${haveV ? fmt(mm ? V / mm : V) : "–"}</td>`;
       lb.appendChild(tr);
     });
@@ -442,7 +447,7 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
   function init() {
     $("sampleTag").hidden = !S.sample;
     renderLots(); renderRounds();
-    ["hintMin", "hintMax", "unknownAdd", "myBid", "winBid", "realVal"].forEach((k) => bindField(k, k));
+    ["gameEst", "hintMin", "hintMax", "unknownAdd", "myBid", "winBid", "realVal"].forEach((k) => bindField(k, k));
     [0, 1, 2].forEach((i) => bindField("opp" + (i + 1), "opp", i));
     update();
   }
