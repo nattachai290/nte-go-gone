@@ -83,7 +83,7 @@ button.x { padding: 4px 9px; color: var(--muted); background: transparent; }
 .clue p { margin: 2px 0 0; font-size: 14px; color: #d6def3; overflow-wrap: anywhere; }
 .clue.old { opacity: .7; }
 .empty { border: 1px dashed var(--line); border-radius: 12px; padding: 14px; color: var(--muted); font-size: 14px; text-align: center; }
-.addclue { display: grid; gap: 8px; grid-template-columns: 64px minmax(0, 2.2fr) minmax(0, 0.9fr) minmax(0, 1fr) auto; align-items: end; }
+.addclue { display: grid; gap: 8px; grid-template-columns: 64px minmax(0, 2.2fr) auto auto minmax(0, 1fr) auto; align-items: end; }
 @media (max-width: 640px) { .addclue { grid-template-columns: 1fr 1fr; } .addclue button { grid-column: 1 / -1; } }
 
 /* board */
@@ -174,10 +174,12 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
           <option value="count">Count Device · จำนวนชิ้นของสี</option>
           <option value="value">Valuation Device · มูลค่ารวมของสี</option>
           <option value="avg">Average Value Device · มูลค่าเฉลี่ยของสี</option>
+          <option value="sizeavg">Two-Slot Average · มูลค่าเฉลี่ยตามขนาด</option>
           <option value="total">มูลค่ารวมทั้งตู้</option>
           <option value="note">ข้อความอื่น / โน้ต</option>
         </select></div>
         <div id="cRWrap"><label for="cR">สี</label><select id="cR"></select></div>
+        <div id="cAWrap" hidden><label for="cA">ขนาด (ช่อง)</label><input id="cA" inputmode="numeric" value="2"></div>
         <div id="cNWrap"><label for="cN" id="cNLabel">จำนวน</label><input id="cN" inputmode="decimal" placeholder="เช่น 28"></div>
         <button type="button" id="addClue">+ เพิ่มคำใบ้</button>
       </div>
@@ -186,10 +188,12 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
         <div class="tbl" style="margin-top:8px"><table>
           <thead><tr><th>อุปกรณ์</th><th>ผล</th><th>ใส่ที่</th></tr></thead>
           <tbody>
-            <tr><td>Size Device</td><td>Micro 4 · Small 6 · Medium 8 เงา</td><td>วาดเงาสี ? ลงตาราง</td></tr>
-            <tr><td>Evaluation Device</td><td>Micro 2 · Small 4 · Medium 6 ชิ้น บอกสี</td><td>แตะเงาแล้วเปลี่ยนสี</td></tr>
+            <tr><td>Size Device</td><td>Micro 4 · Small 6 · Medium 8 · Large 10 เงา</td><td>วาดเงาสี ? ลงตาราง</td></tr>
+            <tr><td>Evaluation Device</td><td>Micro 2 · Small 4 · Medium 6 · Large 8 ชิ้น บอกสี</td><td>แตะเงาแล้วเปลี่ยนสี</td></tr>
             <tr><td>[ประเภท] Evaluation Device<br><span class="hint">Antique · Gem · Tech · Food · Daily Goods · Anomaly</span></td><td>สีของ 3 ชิ้นในประเภทนั้น</td><td>แตะเงาแล้วเปลี่ยนสี</td></tr>
-            <tr><td>Appraisal Device</td><td>Micro 1 · Small 2 · Medium 3 ชิ้น เปิดของ</td><td>แตะเงาแล้วเลือกชิ้นของ</td></tr>
+            <tr><td>Appraisal Device</td><td>Micro 1 · Small 2 · Medium 3 · Large 5 ชิ้น เปิดของ</td><td>แตะเงาแล้วเลือกชิ้นของ</td></tr>
+            <tr><td>Special Size / Special Evaluation</td><td>เงาหรือสีของชิ้นที่ใช้ช่องมากที่สุด</td><td>วาดเงา แล้วติ๊ก "ชิ้นที่ใหญ่ที่สุด"</td></tr>
+            <tr><td>Two-Slot Average Value</td><td>มูลค่าเฉลี่ยของของขนาด 2 ช่อง</td><td>คำใบ้ "มูลค่าเฉลี่ยตามขนาด"</td></tr>
             <tr><td>[สี] Slot Device</td><td>ช่องรวมของสีนั้น</td><td>คำใบ้ "Slot Device"</td></tr>
             <tr><td>[สี] Count Device</td><td>จำนวนชิ้นของสีนั้น</td><td>คำใบ้ "Count Device"</td></tr>
             <tr><td>[สี] Valuation Device</td><td>มูลค่ารวมของสีนั้น</td><td>คำใบ้ "Valuation Device"</td></tr>
@@ -281,7 +285,7 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
   const MULTS = [2, 1.6, 1.3, 1.1, null];
   const KEY = "ggg-calc-v5";
   const BUILTIN = /*BUILTIN*/;
-  const RAR = [["gray", "เทา"], ["green", "เขียว"], ["blue", "ฟ้า"], ["purple", "ม่วง"], ["orange", "ส้ม"], ["red", "แดง"]];
+  const RAR = [["gray", "เทา"], ["green", "เขียว"], ["blue", "ฟ้า"], ["purple", "ม่วง"], ["orange", "ทอง"], ["red", "แดง"]];
   const RK = RAR.map((x) => x[0]);
   const rname = (r) => r === "unk" ? "ไม่รู้สี" : (RAR.find((x) => x[0] === r) || ["", r])[1];
   const CLUE = {
@@ -289,6 +293,7 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
     count: { t: "Count Device · จำนวนชิ้น", needR: true, lab: "จำนวนชิ้น", d: (c) => `ของ${rname(c.r)}มีทั้งหมด ${fmt(c.n)} ชิ้น` },
     value: { t: "Valuation Device · มูลค่ารวม", needR: true, lab: "มูลค่า", d: (c) => `ของ${rname(c.r)}มูลค่ารวม ${fmt(c.n)}` },
     avg: { t: "Average Value Device · มูลค่าเฉลี่ย", needR: true, lab: "มูลค่าเฉลี่ย", d: (c) => `ของ${rname(c.r)}มูลค่าเฉลี่ยชิ้นละ ${fmt(c.n)}` },
+    sizeavg: { t: "มูลค่าเฉลี่ยตามขนาด", needR: false, needA: true, lab: "มูลค่าเฉลี่ย", d: (c) => `ของขนาด ${c.a} ช่องมูลค่าเฉลี่ยชิ้นละ ${fmt(c.n)}` },
     total: { t: "มูลค่ารวมทั้งตู้", needR: false, lab: "มูลค่า", d: (c) => `มูลค่ารวมของทั้งตู้ ${fmt(c.n)}` },
     note: { t: "โน้ต", needR: false, lab: "ข้อความ", d: (c) => esc(c.text) }
   };
@@ -338,15 +343,19 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
     if (it) return { eff: it.r, lo: it.v, hi: it.v, mid: it.v, item: it, n: 1 };
     const c = cands(b);
     if (!c.length) return { eff: b.r, lo: 0, hi: 0, mid: 0, none: true, n: 0 };
-    const vs = c.map((x) => x.v);
-    return { eff: b.r, lo: Math.min(...vs), hi: Math.max(...vs), mid: vs.reduce((a, z) => a + z, 0) / vs.length, n: c.length };
+    const vs = c.map((x) => x.v), lo = Math.min(...vs), hi = Math.max(...vs);
+    let mid = vs.reduce((a, z) => a + z, 0) / vs.length;
+    const sa = S.intel.filter((x) => x.type === "sizeavg" && x.a === b.w * b.h && isFinite(x.n)).sort((a, z) => z.round - a.round)[0];
+    if (sa) mid = Math.max(lo, Math.min(hi, sa.n));
+    return { eff: b.r, lo, hi, mid, n: c.length };
   }
 
   /* fill `area` slots of rarity r with catalog items (unlimited copies), optionally exactly `count` items */
+  const maxArea = () => { const b = S.blocks.find((x) => x.big); return b ? b.w * b.h : Infinity; };
   function fill(r, area, count) {
     if (area === 0 && (count == null || count === 0)) return { ok: true, lo: 0, hi: 0 };
     if (area < 0 || (count != null && count < 0) || area > 400) return { ok: false };
-    const items = BUILTIN.filter((c) => okItem(c) && c.r === r).map((c) => ({ a: c.w * c.h, v: c.v }));
+    const items = BUILTIN.filter((c) => okItem(c) && c.r === r && c.w * c.h <= maxArea()).map((c) => ({ a: c.w * c.h, v: c.v }));
     if (!items.length) return { ok: false };
     if (count == null) {
       const mn = new Array(area + 1).fill(Infinity), mx = new Array(area + 1).fill(-Infinity);
@@ -373,7 +382,7 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
   function feasibleCounts(r, area) {
     if (area === 0) return [0];
     if (area < 0 || area > 300) return [];
-    const items = BUILTIN.filter((c) => okItem(c) && c.r === r).map((c) => c.w * c.h);
+    const items = BUILTIN.filter((c) => okItem(c) && c.r === r && c.w * c.h <= maxArea()).map((c) => c.w * c.h);
     const W = area + 1, ok = new Uint8Array((area + 1) * W); ok[0] = 1;
     for (let s = 1; s <= area; s++) for (let k = 1; k <= s; k++) for (const a of items) if (a <= s && ok[(s - a) * W + k - 1]) { ok[s * W + k] = 1; break; }
     const out = []; for (let k = 1; k <= area; k++) if (ok[area * W + k]) out.push(k);
@@ -466,6 +475,7 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
   function clueForm() {
     const t = CLUE[$("cType").value];
     $("cRWrap").hidden = !t.needR;
+    $("cAWrap").hidden = !t.needA;
     $("cNLabel").textContent = t.lab;
     const n = $("cN");
     n.className = $("cType").value === "note" ? "txt" : "";
@@ -481,6 +491,7 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
     if (type === "note") { if (!raw) return; c.text = raw; }
     else { const n = parse(raw); if (!isFinite(n)) { $("cN").focus(); return; } c.n = n; }
     if (CLUE[type].needR) c.r = $("cR").value;
+    if (CLUE[type].needA) { const a = Math.round(parse($("cA").value)); if (!(a > 0)) { $("cA").focus(); return; } c.a = a; }
     S.intel.push(c); $("cN").value = ""; touched(); renderClues(); update();
   });
   $("cN").addEventListener("keydown", (e) => { if (e.key === "Enter") $("addClue").click(); });
@@ -566,6 +577,7 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
     box.innerHTML =
       `<div class="ph"><b>เงา ${b.w}×${b.h} · ${rname(b.r)}</b><button type="button" class="ghost" id="delBlk">ลบเงานี้</button></div>` +
       `<div class="tools">${rb}</div>` +
+      `<label style="display:flex;gap:8px;align-items:center;font-size:14px;color:var(--ink);margin:0"><input type="checkbox" id="bigChk" style="width:auto"${b.big ? " checked" : ""}> ชิ้นที่ใช้ช่องมากที่สุด (Special Size / Special Evaluation)</label>` +
       (c.length ? `<p class="hint">${c.length} แบบที่เป็นไปได้ · แตะเพื่อระบุว่าเป็นชิ้นนี้</p><div class="cands">${c.map((x, i) => `<button type="button" class="cand" data-i="${i}" aria-pressed="${!!(b.item && b.item.n === x.n && b.item.r === x.r)}"><span><span class="sw s-${x.r}"></span>${esc(x.n)}</span><span class="num">${fmt(x.v)}</span></button>`).join("")}</div>`
         : `<p class="hint">ไม่มีของ${b.r === "unk" ? "" : rname(b.r)}ขนาด ${b.w}×${b.h} ในคลัง ตรวจสีหรือขนาดอีกครั้ง</p>`);
     box.querySelectorAll("[data-r]").forEach((e) => e.addEventListener("click", () => { b.r = e.dataset.r; b.item = null; touched(); update(); }));
@@ -574,6 +586,7 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding-block
       b.item = b.item && b.item.n === x.n && b.item.r === x.r ? null : { n: x.n, r: x.r };
       touched(); update();
     }));
+    $("bigChk").addEventListener("change", (e) => { S.blocks.forEach((x) => { x.big = false; }); b.big = e.target.checked; touched(); update(); });
     $("delBlk").addEventListener("click", () => { S.blocks = S.blocks.filter((x) => x !== b); S.sel = null; touched(); update(); });
   }
 
